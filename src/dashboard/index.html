@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PropSense AI — Real Estate Analytics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+/* ─── Design tokens ───────────────────────────────────────────── */
+:root {
+  --bg:         #09090f;
+  --surface:    #111118;
+  --surface2:   #1a1a26;
+  --border:     rgba(255,255,255,.07);
+  --accent:     #6c47ff;
+  --accent2:    #00d4a8;
+  --accent3:    #ff6b6b;
+  --text:       #e8e8f0;
+  --muted:      #6b6b80;
+  --gold:       #f5c842;
+  --radius:     14px;
+  --glow:       0 0 40px rgba(108,71,255,.25);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: "DM Sans", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ─── Noise texture overlay ──────────────────────────────────── */
+body::before {
+  content: "";
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='.04'/%3E%3C/svg%3E");
+  opacity: .6;
+}
+
+/* ─── Sidebar ────────────────────────────────────────────────── */
+.sidebar {
+  position: fixed; left: 0; top: 0; bottom: 0; width: 240px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  padding: 28px 0; z-index: 100;
+}
+.sidebar-logo {
+  padding: 0 24px 28px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-logo h1 {
+  font-family: "Syne", sans-serif;
+  font-weight: 800; font-size: 1.4rem;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.sidebar-logo span { font-size: .72rem; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+.nav { padding: 20px 12px; flex: 1; }
+.nav-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 14px; border-radius: 10px; cursor: pointer;
+  font-size: .88rem; font-weight: 500; color: var(--muted);
+  transition: all .2s; margin-bottom: 4px; border: none; background: none; width: 100%; text-align: left;
+}
+.nav-item:hover { color: var(--text); background: var(--surface2); }
+.nav-item.active { color: var(--text); background: rgba(108,71,255,.18); }
+.nav-item .icon { font-size: 1.1rem; width: 20px; text-align: center; }
+.sidebar-footer { padding: 20px 24px; border-top: 1px solid var(--border); font-size: .72rem; color: var(--muted); }
+
+/* ─── Main ───────────────────────────────────────────────────── */
+.main { margin-left: 240px; padding: 40px 48px; min-height: 100vh; position: relative; z-index: 1; }
+
+/* ─── Section management ─────────────────────────────────────── */
+.section { display: none; }
+.section.active { display: block; }
+
+/* ─── Page header ────────────────────────────────────────────── */
+.page-header { margin-bottom: 36px; }
+.page-header h2 {
+  font-family: "Syne", sans-serif; font-size: 2rem; font-weight: 700; margin-bottom: 6px;
+}
+.page-header p { color: var(--muted); font-size: .9rem; }
+
+/* ─── Stat cards ─────────────────────────────────────────────── */
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 36px; }
+.stat-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 22px 24px; position: relative; overflow: hidden;
+}
+.stat-card::before {
+  content: ""; position: absolute; top: -40px; right: -40px;
+  width: 100px; height: 100px; border-radius: 50%;
+  background: var(--c, var(--accent)); opacity: .07;
+}
+.stat-label { font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+.stat-value { font-family: "Syne", sans-serif; font-size: 1.75rem; font-weight: 700; }
+.stat-sub { font-size: .78rem; color: var(--muted); margin-top: 4px; }
+.stat-up { color: var(--accent2); } .stat-down { color: var(--accent3); }
+
+/* ─── Cards / panels ─────────────────────────────────────────── */
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 28px; margin-bottom: 24px;
+}
+.card-title { font-family: "Syne", sans-serif; font-size: 1.05rem; font-weight: 600; margin-bottom: 20px; }
+
+/* ─── Grid layouts ────────────────────────────────────────────── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 18px; }
+
+/* ─── Form elements ──────────────────────────────────────────── */
+.form-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 18px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: .78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.field input, .field select {
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); padding: 10px 14px; border-radius: 10px;
+  font-family: inherit; font-size: .9rem;
+  transition: border-color .2s;
+}
+.field input:focus, .field select:focus { outline: none; border-color: var(--accent); }
+.field select option { background: var(--surface2); }
+
+/* ─── Buttons ────────────────────────────────────────────────── */
+.btn {
+  padding: 12px 28px; border-radius: 10px; border: none; cursor: pointer;
+  font-family: "Syne", sans-serif; font-size: .9rem; font-weight: 600;
+  transition: all .2s;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), #8b64ff);
+  color: #fff; box-shadow: 0 4px 20px rgba(108,71,255,.35);
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(108,71,255,.45); }
+.btn-outline {
+  background: transparent; color: var(--accent);
+  border: 1px solid var(--accent);
+}
+.btn-outline:hover { background: rgba(108,71,255,.1); }
+
+/* ─── Result box ─────────────────────────────────────────────── */
+.result-box {
+  background: linear-gradient(135deg, rgba(108,71,255,.12), rgba(0,212,168,.08));
+  border: 1px solid rgba(108,71,255,.3); border-radius: var(--radius);
+  padding: 28px; text-align: center; display: none;
+}
+.result-box.show { display: block; animation: fadeUp .4s ease; }
+.result-price {
+  font-family: "Syne", sans-serif; font-size: 2.8rem; font-weight: 800;
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.result-range { color: var(--muted); font-size: .88rem; margin-top: 8px; }
+.result-meta { display: flex; justify-content: center; gap: 36px; margin-top: 20px; }
+.result-meta-item { text-align: center; }
+.result-meta-item .val { font-family: "Syne",sans-serif; font-size: 1.1rem; font-weight: 600; }
+.result-meta-item .lbl { font-size: .72rem; color: var(--muted); text-transform: uppercase; }
+
+/* ─── Table ──────────────────────────────────────────────────── */
+.data-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.data-table th {
+  background: var(--surface2); color: var(--muted); font-weight: 500;
+  padding: 10px 14px; text-align: left; font-size: .75rem; text-transform: uppercase; letter-spacing: .04em;
+}
+.data-table td { padding: 11px 14px; border-bottom: 1px solid var(--border); }
+.data-table tr:last-child td { border: none; }
+.data-table tr:hover td { background: rgba(255,255,255,.02); }
+.badge {
+  display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: .72rem; font-weight: 600;
+}
+.badge-green { background: rgba(0,212,168,.15); color: var(--accent2); }
+.badge-red   { background: rgba(255,107,107,.15); color: var(--accent3); }
+.badge-blue  { background: rgba(108,71,255,.15);  color: #a78bfa; }
+.badge-gold  { background: rgba(245,200,66,.15);  color: var(--gold); }
+
+/* ─── Investment grade badge ─────────────────────────────────── */
+.grade-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 52px; height: 52px; border-radius: 50%;
+  font-family: "Syne",sans-serif; font-size: 1.2rem; font-weight: 800;
+}
+.grade-Aplus { background: rgba(0,212,168,.15); color: var(--accent2); border: 2px solid var(--accent2); }
+.grade-A     { background: rgba(108,71,255,.15); color: #a78bfa;       border: 2px solid #a78bfa; }
+.grade-B     { background: rgba(245,200,66,.15); color: var(--gold);   border: 2px solid var(--gold); }
+.grade-C     { background: rgba(255,107,107,.15); color: var(--accent3); border: 2px solid var(--accent3); }
+
+/* ─── Chart containers ───────────────────────────────────────── */
+.chart-wrap { position: relative; height: 260px; }
+
+/* ─── Market heatmap ─────────────────────────────────────────── */
+.heatmap-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 12px; }
+.heat-cell {
+  border-radius: 10px; padding: 16px 12px; text-align: center; cursor: pointer;
+  transition: transform .2s;
+}
+.heat-cell:hover { transform: scale(1.04); }
+.heat-city { font-family: "Syne",sans-serif; font-size: .82rem; font-weight: 600; margin-bottom: 4px; }
+.heat-price { font-size: .75rem; opacity: .8; }
+.heat-ppsf  { font-size: .68rem; opacity: .65; margin-top: 2px; }
+
+/* ─── Anomaly meter ──────────────────────────────────────────── */
+.anomaly-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+.anomaly-row:last-child { border: none; }
+.anomaly-bar-wrap { flex: 1; background: var(--surface2); border-radius: 4px; height: 6px; }
+.anomaly-bar { height: 6px; border-radius: 4px; }
+
+/* ─── Recommendation card ────────────────────────────────────── */
+.rec-card {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 18px; cursor: pointer;
+  transition: border-color .2s, transform .2s;
+}
+.rec-card:hover { border-color: var(--accent); transform: translateY(-3px); }
+.rec-sim { font-size: .75rem; color: var(--accent2); font-weight: 600; margin-bottom: 8px; }
+.rec-name { font-family: "Syne",sans-serif; font-size: .95rem; font-weight: 600; margin-bottom: 4px; }
+.rec-details { font-size: .8rem; color: var(--muted); line-height: 1.6; }
+.rec-price { font-family: "Syne",sans-serif; color: var(--accent); font-size: 1.1rem; font-weight: 700; margin-top: 10px; }
+
+/* ─── Loading spinner ────────────────────────────────────────── */
+.spinner { display: none; text-align: center; padding: 20px; }
+.spinner.show { display: block; }
+.spinner svg { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fadeUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: none; } }
+
+/* ─── Responsive ─────────────────────────────────────────────── */
+@media(max-width:1100px) {
+  .stats-grid { grid-template-columns: repeat(2,1fr); }
+  .form-row   { grid-template-columns: repeat(2,1fr); }
+}
+@media(max-width:768px) {
+  .sidebar { display: none; }
+  .main    { margin-left: 0; padding: 24px 20px; }
+  .grid-2  { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ SIDEBAR ══════════════ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <h1>PropSense</h1>
+    <span>AI Real Estate Analytics</span>
+  </div>
+  <nav class="nav">
+    <button class="nav-item active" onclick="showSection('dashboard')">
+      <span class="icon">📊</span> Dashboard
+    </button>
+    <button class="nav-item" onclick="showSection('predict')">
+      <span class="icon">🏷️</span> Price Prediction
+    </button>
+    <button class="nav-item" onclick="showSection('recommend')">
+      <span class="icon">🔍</span> Recommendations
+    </button>
+    <button class="nav-item" onclick="showSection('investment')">
+      <span class="icon">📈</span> Investment Analysis
+    </button>
+    <button class="nav-item" onclick="showSection('anomaly')">
+      <span class="icon">⚠️</span> Anomaly Detection
+    </button>
+    <button class="nav-item" onclick="showSection('market')">
+      <span class="icon">🗺️</span> Market Heatmap
+    </button>
+  </nav>
+  <div class="sidebar-footer">
+    MCA Final Year Project<br>AI-Powered Real Estate Platform
+  </div>
+</aside>
+
+<!-- ══════════════ MAIN ══════════════ -->
+<main class="main">
+
+<!-- ── DASHBOARD ──────────────────────────────────────────── -->
+<section id="dashboard" class="section active">
+  <div class="page-header">
+    <h2>Market Overview</h2>
+    <p>Real-time analytics across 10 Indian cities · 2,000+ listings</p>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card" style="--c:var(--accent)">
+      <div class="stat-label">Avg Property Price</div>
+      <div class="stat-value">₹87.4L</div>
+      <div class="stat-sub stat-up">▲ 7.2% YoY appreciation</div>
+    </div>
+    <div class="stat-card" style="--c:var(--accent2)">
+      <div class="stat-label">Avg Price / sqft</div>
+      <div class="stat-value">₹9,840</div>
+      <div class="stat-sub stat-up">▲ 5.1% vs last quarter</div>
+    </div>
+    <div class="stat-card" style="--c:var(--gold)">
+      <div class="stat-label">Avg Rental Yield</div>
+      <div class="stat-value">3.4%</div>
+      <div class="stat-sub">Net yield after taxes &amp; maintenance</div>
+    </div>
+    <div class="stat-card" style="--c:var(--accent3)">
+      <div class="stat-label">Listings Analysed</div>
+      <div class="stat-value">2,000</div>
+      <div class="stat-sub stat-down">97 anomalies detected (4.85%)</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Price Distribution by City</div>
+      <div class="chart-wrap">
+        <canvas id="cityPriceChart"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Property Type Mix</div>
+      <div class="chart-wrap">
+        <canvas id="typeDonut"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">ML Model Performance Comparison</div>
+      <div class="chart-wrap">
+        <canvas id="modelChart"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Price Trend — Top 4 Cities</div>
+      <div class="chart-wrap">
+        <canvas id="trendChart"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── PRICE PREDICTION ────────────────────────────────────── -->
+<section id="predict" class="section">
+  <div class="page-header">
+    <h2>Price Prediction</h2>
+    <p>Enter property details to get an AI-powered valuation</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Property Details</div>
+    <div class="form-row">
+      <div class="field">
+        <label>City</label>
+        <select id="p-city">
+          <option>Mumbai</option><option selected>Pune</option><option>Bangalore</option>
+          <option>Hyderabad</option><option>Chennai</option><option>Delhi</option>
+          <option>Kolkata</option><option>Ahmedabad</option><option>Jaipur</option><option>Surat</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Property Type</label>
+        <select id="p-type">
+          <option>Apartment</option><option>Villa</option>
+          <option>Independent House</option><option>Studio</option><option>Penthouse</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Bedrooms</label>
+        <select id="p-bed">
+          <option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Bathrooms</label>
+        <select id="p-bath">
+          <option>1</option><option selected>2</option><option>3</option><option>4</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Area (sqft)</label>
+        <input type="number" id="p-area" value="1200" min="200" max="10000"/>
+      </div>
+      <div class="field">
+        <label>Age (years)</label>
+        <input type="number" id="p-age" value="5" min="0" max="50"/>
+      </div>
+      <div class="field">
+        <label>Floor Number</label>
+        <input type="number" id="p-floor" value="4" min="0" max="50"/>
+      </div>
+      <div class="field">
+        <label>Total Floors</label>
+        <input type="number" id="p-totalfloor" value="12" min="1" max="60"/>
+      </div>
+      <div class="field">
+        <label>Location Score (0–10)</label>
+        <input type="number" id="p-loc" value="7.5" step="0.1" min="0" max="10"/>
+      </div>
+    </div>
+    <div class="form-row" style="grid-template-columns:1fr; margin-bottom:0">
+      <div class="field">
+        <label>Amenities (comma-separated)</label>
+        <input type="text" id="p-amenities" value="Gym, Parking, Security, Lift, CCTV"/>
+      </div>
+    </div>
+    <div style="margin-top:24px; display:flex; gap:14px; align-items:center">
+      <button class="btn btn-primary" onclick="runPrediction()">🧠 Predict Price</button>
+      <button class="btn btn-outline" onclick="resetPrediction()">Reset</button>
+    </div>
+  </div>
+
+  <div class="spinner" id="pred-spinner">
+    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
+      <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+    </svg>
+    <p style="color:var(--muted);font-size:.85rem;margin-top:8px">Analysing property …</p>
+  </div>
+
+  <div class="result-box" id="pred-result">
+    <div style="font-size:.82rem;color:var(--muted);margin-bottom:8px">ESTIMATED MARKET VALUE</div>
+    <div class="result-price" id="res-price">₹0</div>
+    <div class="result-range" id="res-range">Range: ₹0 – ₹0</div>
+    <div class="result-meta">
+      <div class="result-meta-item"><div class="val" id="res-ppsf">0</div><div class="lbl">₹/sqft</div></div>
+      <div class="result-meta-item"><div class="val" id="res-model">—</div><div class="lbl">Model Used</div></div>
+      <div class="result-meta-item"><div class="val" id="res-conf">±10%</div><div class="lbl">Confidence</div></div>
+    </div>
+  </div>
+
+  <div class="card" id="pred-chart-card" style="display:none">
+    <div class="card-title">Price Breakdown — Similar Properties</div>
+    <div class="chart-wrap"><canvas id="priceBreakdownChart"></canvas></div>
+  </div>
+</section>
+
+<!-- ── RECOMMENDATIONS ─────────────────────────────────────── -->
+<section id="recommend" class="section">
+  <div class="page-header">
+    <h2>Property Recommendations</h2>
+    <p>Find properties similar to your target listing</p>
+  </div>
+  <div class="card">
+    <div class="card-title">Query Property</div>
+    <div class="form-row">
+      <div class="field">
+        <label>City</label>
+        <select id="r-city">
+          <option>Mumbai</option><option selected>Pune</option><option>Bangalore</option>
+          <option>Hyderabad</option><option>Chennai</option><option>Delhi</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Property Type</label>
+        <select id="r-type"><option>Apartment</option><option>Villa</option><option>Studio</option><option>Penthouse</option></select>
+      </div>
+      <div class="field">
+        <label>Bedrooms</label>
+        <select id="r-bed"><option>1</option><option>2</option><option selected>3</option><option>4</option></select>
+      </div>
+      <div class="field">
+        <label>Area (sqft)</label>
+        <input type="number" id="r-area" value="1200"/>
+      </div>
+      <div class="field">
+        <label>Budget (₹)</label>
+        <input type="number" id="r-price" value="8500000"/>
+      </div>
+      <div class="field">
+        <label>Top N Results</label>
+        <select id="r-topn">
+          <option>3</option><option selected>5</option><option>8</option><option>10</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="runRecommendation()">🔍 Find Similar Properties</button>
+  </div>
+  <div id="rec-results" class="grid-3" style="margin-top:0"></div>
+</section>
+
+<!-- ── INVESTMENT ANALYSIS ─────────────────────────────────── -->
+<section id="investment" class="section">
+  <div class="page-header">
+    <h2>Investment Analysis</h2>
+    <p>ROI projections, rental yield, and mortgage calculations</p>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Property Parameters</div>
+      <div class="form-row" style="grid-template-columns:1fr 1fr">
+        <div class="field"><label>Purchase Price (₹)</label><input type="number" id="i-price" value="8500000"/></div>
+        <div class="field"><label>City</label>
+          <select id="i-city">
+            <option>Mumbai</option><option selected>Pune</option><option>Bangalore</option>
+            <option>Hyderabad</option><option>Chennai</option><option>Delhi</option>
+            <option>Kolkata</option><option>Ahmedabad</option><option>Jaipur</option><option>Surat</option>
+          </select>
+        </div>
+        <div class="field"><label>Annual Appreciation (%)</label><input type="number" id="i-appr" value="7" step="0.5"/></div>
+        <div class="field"><label>Rental Yield (%)</label><input type="number" id="i-yield" value="3.5" step="0.1"/></div>
+        <div class="field"><label>Loan Rate (%)</label><input type="number" id="i-rate" value="8.5" step="0.1"/></div>
+        <div class="field"><label>Tenure (years)</label><input type="number" id="i-tenure" value="20"/></div>
+      </div>
+      <button class="btn btn-primary" onclick="runInvestment()">📈 Calculate ROI</button>
+    </div>
+    <div class="card" id="inv-result-card" style="display:none">
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
+        <div class="grade-badge" id="inv-grade-badge">A</div>
+        <div>
+          <div style="font-family:Syne,sans-serif;font-size:1.1rem;font-weight:700" id="inv-rec">—</div>
+          <div style="font-size:.78rem;color:var(--muted)" id="inv-grade-text">Investment Grade</div>
+        </div>
+      </div>
+      <table class="data-table" id="inv-table"></table>
+    </div>
+  </div>
+  <div class="card" id="inv-chart-card" style="display:none">
+    <div class="card-title">10-Year Projection</div>
+    <div class="chart-wrap" style="height:300px"><canvas id="projectionChart"></canvas></div>
+  </div>
+</section>
+
+<!-- ── ANOMALY DETECTION ────────────────────────────────────── -->
+<section id="anomaly" class="section">
+  <div class="page-header">
+    <h2>Anomaly Detection</h2>
+    <p>Identify suspicious listings and pricing outliers</p>
+  </div>
+  <div class="stats-grid">
+    <div class="stat-card" style="--c:var(--accent3)"><div class="stat-label">Total Listings</div><div class="stat-value">2,000</div><div class="stat-sub">Analysed</div></div>
+    <div class="stat-card" style="--c:var(--accent3)"><div class="stat-label">Anomalies Detected</div><div class="stat-value">97</div><div class="stat-sub stat-down">4.85% of all listings</div></div>
+    <div class="stat-card" style="--c:var(--accent)"><div class="stat-label">IF Outliers</div><div class="stat-value">54</div><div class="stat-sub">Isolation Forest</div></div>
+    <div class="stat-card" style="--c:var(--gold)"><div class="stat-label">Price Z-Score &gt;3</div><div class="stat-value">43</div><div class="stat-sub">Statistical outliers</div></div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Anomaly Score by City</div>
+      <div id="anomaly-city-bars"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Detection Method Breakdown</div>
+      <div class="chart-wrap"><canvas id="anomalyMethodChart"></canvas></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Flagged Listings (Sample)</div>
+    <div style="overflow-x:auto">
+      <table class="data-table" id="anomaly-table">
+        <thead><tr><th>ID</th><th>City</th><th>Type</th><th>Price</th><th>Price/sqft</th><th>Score</th><th>Method</th><th>Status</th></tr></thead>
+        <tbody id="anomaly-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ── MARKET HEATMAP ──────────────────────────────────────── -->
+<section id="market" class="section">
+  <div class="page-header">
+    <h2>Market Heatmap</h2>
+    <p>Average property prices across Indian cities</p>
+  </div>
+  <div class="card">
+    <div class="card-title">City Price Intensity Map</div>
+    <div class="heatmap-grid" id="heatmap-grid" style="margin-bottom:24px"></div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Price per sqft Ranking</div>
+      <div class="chart-wrap" style="height:320px"><canvas id="rankChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Rental Yield by City</div>
+      <div class="chart-wrap" style="height:320px"><canvas id="yieldChart"></canvas></div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   DATA & CONFIG
+══════════════════════════════════════════════════════════════ */
+const CITIES = ["Mumbai","Delhi","Bangalore","Hyderabad","Chennai","Pune","Kolkata","Ahmedabad","Jaipur","Surat"];
+const AVG_PPSF  = [25000,18000,12000,8500,9500,9000,7000,6500,6000,5500];
+const AVG_PRICE = [112,85,68,54,58,62,41,38,34,30]; // lakhs
+const YIELDS    = [2.8,3.0,3.8,4.1,3.6,3.4,4.3,4.6,4.8,5.0]; // %
+
+const CHART_DEFAULTS = {
+  color: "#e8e8f0",
+  gridColor: "rgba(255,255,255,.06)",
+  font: { family: "DM Sans" }
+};
+Chart.defaults.color = CHART_DEFAULTS.color;
+Chart.defaults.borderColor = CHART_DEFAULTS.gridColor;
+Chart.defaults.font.family = "DM Sans";
+
+const palette = ["#6c47ff","#00d4a8","#ff6b6b","#f5c842","#a78bfa","#34d399","#fb923c","#38bdf8","#f472b6","#84cc16"];
+
+/* ══════════════════════════════════════════════════════════════
+   NAVIGATION
+══════════════════════════════════════════════════════════════ */
+function showSection(id) {
+  document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  event.currentTarget.classList.add("active");
+  // Lazy-init charts
+  if (id === "dashboard") initDashboardCharts();
+  if (id === "market")    initMarket();
+  if (id === "anomaly")   initAnomalySection();
+}
+
+/* ══════════════════════════════════════════════════════════════
+   DASHBOARD CHARTS
+══════════════════════════════════════════════════════════════ */
+let dashInit = false;
+function initDashboardCharts() {
+  if (dashInit) return; dashInit = true;
+
+  // City price bar chart
+  new Chart(document.getElementById("cityPriceChart"), {
+    type: "bar",
+    data: {
+      labels: CITIES,
+      datasets: [{
+        label: "Avg Price (₹ Lakhs)",
+        data: AVG_PRICE,
+        backgroundColor: palette,
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { grid: { color: CHART_DEFAULTS.gridColor }, beginAtZero: true },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+
+  // Type donut
+  new Chart(document.getElementById("typeDonut"), {
+    type: "doughnut",
+    data: {
+      labels: ["Apartment","Villa","Ind. House","Studio","Penthouse"],
+      datasets: [{ data: [42,22,18,12,6], backgroundColor: palette, borderWidth: 0 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: "right", labels: { padding: 16, usePointStyle: true } },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed}%` } }
+      },
+      cutout: "65%"
+    }
+  });
+
+  // Model comparison
+  new Chart(document.getElementById("modelChart"), {
+    type: "bar",
+    data: {
+      labels: ["Linear Reg.", "Ridge Reg.", "Random Forest", "XGBoost / GBM", "Neural Net"],
+      datasets: [
+        { label: "R² Score", data: [0.72, 0.73, 0.91, 0.93, 0.89], backgroundColor: "#6c47ff", borderRadius: 5 },
+        { label: "MAPE (%)", data: [18.2, 17.8, 9.4, 8.1, 10.3], backgroundColor: "#00d4a8", borderRadius: 5 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: "top" } },
+      scales: {
+        y: { grid: { color: CHART_DEFAULTS.gridColor }, beginAtZero: true },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+
+  // Trend line chart
+  const years = ["2019","2020","2021","2022","2023","2024","2025"];
+  new Chart(document.getElementById("trendChart"), {
+    type: "line",
+    data: {
+      labels: years,
+      datasets: [
+        { label: "Mumbai", data: [85,84,88,96,104,110,112], borderColor:"#6c47ff", tension:.4, fill:false, pointRadius:3 },
+        { label: "Bangalore", data: [45,46,50,58,62,66,68], borderColor:"#00d4a8", tension:.4, fill:false, pointRadius:3 },
+        { label: "Hyderabad", data: [36,37,40,47,51,53,54], borderColor:"#f5c842", tension:.4, fill:false, pointRadius:3 },
+        { label: "Pune", data: [40,40,43,52,58,60,62], borderColor:"#ff6b6b", tension:.4, fill:false, pointRadius:3 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: "top" } },
+      scales: {
+        y: { grid: { color: CHART_DEFAULTS.gridColor }, title: { display:true, text:"₹ Lakhs" } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+}
+// Auto-init dashboard on load
+window.addEventListener("load", initDashboardCharts);
+
+/* ══════════════════════════════════════════════════════════════
+   PRICE PREDICTION (simulated — replace with real API call)
+══════════════════════════════════════════════════════════════ */
+const CITY_BASE_PPSF = {
+  Mumbai:25000,Delhi:18000,Bangalore:12000,Pune:9000,Hyderabad:8500,
+  Chennai:9500,Kolkata:7000,Ahmedabad:6500,Jaipur:6000,Surat:5500
+};
+const TYPE_FACTOR = { Apartment:1.0,Villa:1.5,"Independent House":1.2,Studio:0.85,Penthouse:1.8 };
+
+function simulatePredict(params) {
+  const base   = CITY_BASE_PPSF[params.city] || 9000;
+  const tf     = TYPE_FACTOR[params.propType] || 1.0;
+  const ageD   = Math.max(0, 1 - params.age * 0.01);
+  const amenB  = 1 + params.amenCount * 0.025;
+  const locB   = 1 + (params.locScore - 5) * 0.05;
+  const noise  = 0.95 + Math.random() * 0.10;
+  const ppsf   = Math.round(base * tf * ageD * amenB * locB * noise);
+  return { price: ppsf * params.area, ppsf, model: "Random Forest" };
+}
+
+function runPrediction() {
+  const city      = document.getElementById("p-city").value;
+  const propType  = document.getElementById("p-type").value;
+  const bedrooms  = +document.getElementById("p-bed").value;
+  const bathrooms = +document.getElementById("p-bath").value;
+  const area      = +document.getElementById("p-area").value;
+  const age       = +document.getElementById("p-age").value;
+  const floor     = +document.getElementById("p-floor").value;
+  const locScore  = +document.getElementById("p-loc").value;
+  const amenStr   = document.getElementById("p-amenities").value;
+  const amenCount = amenStr.split(",").filter(a => a.trim()).length;
+
+  // Show spinner, hide result
+  document.getElementById("pred-spinner").classList.add("show");
+  document.getElementById("pred-result").classList.remove("show");
+  document.getElementById("pred-chart-card").style.display = "none";
+
+  setTimeout(() => {
+    const { price, ppsf, model } = simulatePredict({ city, propType, age, area, locScore, amenCount });
+    const lo = Math.round(price * 0.90);
+    const hi = Math.round(price * 1.10);
+
+    document.getElementById("res-price").textContent = formatINR(price);
+    document.getElementById("res-range").textContent = `Range: ${formatINR(lo)} – ${formatINR(hi)}`;
+    document.getElementById("res-ppsf").textContent  = `₹${ppsf.toLocaleString("en-IN")}`;
+    document.getElementById("res-model").textContent = model;
+
+    document.getElementById("pred-spinner").classList.remove("show");
+    document.getElementById("pred-result").classList.add("show");
+
+    // Show comparison chart
+    showPriceBreakdownChart(city, propType, price);
+    document.getElementById("pred-chart-card").style.display = "block";
+  }, 900);
+}
+
+function resetPrediction() {
+  document.getElementById("pred-result").classList.remove("show");
+  document.getElementById("pred-chart-card").style.display = "none";
+}
+
+let pbChart = null;
+function showPriceBreakdownChart(city, pType, predicted) {
+  const ctx = document.getElementById("priceBreakdownChart").getContext("2d");
+  if (pbChart) pbChart.destroy();
+  const similar = Array.from({length:6}, (_,i) => Math.round(predicted * (0.85 + i*0.06)));
+  similar[2] = Math.round(predicted);
+  pbChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: ["Comparable 1","Comparable 2","Your Property","Comparable 4","Comparable 5","Comparable 6"],
+      datasets: [{
+        data: similar,
+        backgroundColor: similar.map((_,i) => i===2 ? "#6c47ff" : "rgba(108,71,255,.3)"),
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { grid: { color: CHART_DEFAULTS.gridColor },
+             ticks: { callback: v => `₹${(v/100000).toFixed(0)}L` } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RECOMMENDATIONS (simulated)
+══════════════════════════════════════════════════════════════ */
+const LOCALITIES = {
+  Mumbai:["Bandra","Andheri","Worli","Juhu","Powai"],
+  Pune:["Koregaon Park","Hinjewadi","Kothrud","Viman Nagar","Baner"],
+  Bangalore:["Whitefield","Koramangala","Indiranagar","HSR Layout","Marathahalli"],
+  Hyderabad:["Gachibowli","Hitech City","Banjara Hills","Jubilee Hills","Madhapur"],
+  Chennai:["Anna Nagar","Velachery","OMR","Adyar","T.Nagar"],
+  Delhi:["Dwarka","Vasant Kunj","Rohini","Saket","Lajpat Nagar"],
+};
+
+function runRecommendation() {
+  const city   = document.getElementById("r-city").value;
+  const bed    = +document.getElementById("r-bed").value;
+  const area   = +document.getElementById("r-area").value;
+  const budget = +document.getElementById("r-price").value;
+  const topN   = +document.getElementById("r-topn").value;
+  const locs   = LOCALITIES[city] || ["Area 1","Area 2","Area 3","Area 4","Area 5"];
+  const types  = ["Apartment","Apartment","Villa","Studio","Apartment"];
+
+  const recs = Array.from({length:topN}, (_,i) => ({
+    locality: locs[i % locs.length],
+    type: types[i % types.length],
+    bed: bed + (i%2===0 ? 0 : 1),
+    area: Math.round(area * (0.9 + i*0.05)),
+    price: Math.round(budget * (0.88 + i*0.06)),
+    sim: +(0.97 - i*0.04).toFixed(2),
+    loc: +(6.5 + Math.random()*3).toFixed(1),
+  }));
+
+  const container = document.getElementById("rec-results");
+  container.innerHTML = recs.map(r => `
+    <div class="rec-card">
+      <div class="rec-sim">● ${(r.sim*100).toFixed(0)}% similarity</div>
+      <div class="rec-name">${r.locality}, ${city}</div>
+      <div class="rec-details">
+        ${r.type} · ${r.bed} BHK · ${r.area.toLocaleString("en-IN")} sqft<br>
+        Location Score: ${r.loc}/10
+      </div>
+      <div class="rec-price">${formatINR(r.price)}</div>
+    </div>
+  `).join("");
+}
+
+/* ══════════════════════════════════════════════════════════════
+   INVESTMENT ANALYSIS
+══════════════════════════════════════════════════════════════ */
+const CITY_YIELD_ADJ = {Mumbai:-.5,Delhi:-.3,Bangalore:.5,Hyderabad:.8,Chennai:.2,
+  Pune:.3,Kolkata:.6,Ahmedabad:.9,Jaipur:1.0,Surat:1.1};
+
+let projChart = null;
+function runInvestment() {
+  const price   = +document.getElementById("i-price").value;
+  const city    = document.getElementById("i-city").value;
+  const appr    = +document.getElementById("i-appr").value / 100;
+  const yld     = (+document.getElementById("i-yield").value + (CITY_YIELD_ADJ[city]||0)) / 100;
+  const rate    = +document.getElementById("i-rate").value / 100;
+  const tenure  = +document.getElementById("i-tenure").value;
+
+  const grossRent    = price * yld;
+  const effRent      = grossRent * 0.92;
+  const maintenance  = price * 0.01;
+  const taxOnRent    = effRent * 0.30;
+  const netRent      = effRent - maintenance - taxOnRent;
+  const grossYield   = (grossRent/price*100).toFixed(2);
+  const netYield     = (netRent/price*100).toFixed(2);
+
+  const down      = price * 0.20;
+  const loan      = price * 0.80;
+  const mr        = rate / 12;
+  const n         = tenure * 12;
+  const emi       = loan * mr * Math.pow(1+mr,n) / (Math.pow(1+mr,n)-1);
+
+  const proj5  = price * Math.pow(1+appr, 5);
+  const proj10 = price * Math.pow(1+appr,10);
+  const roi5   = ((proj5  - price + netRent*5)  / price * 100).toFixed(1);
+  const roi10  = ((proj10 - price + netRent*10) / price * 100).toFixed(1);
+  const breakeven = (down / netRent).toFixed(1);
+
+  // Grade
+  let grade = "C", rec = "Below-average";
+  const sc = (+netYield>=3?3:+netYield>=2?2:1) + (+roi10>=200?3:+roi10>=150?2:1) + (+breakeven<=10?2:+breakeven<=18?1:0);
+  if (sc>=7){grade="A+";rec="Excellent investment"} else if (sc>=5){grade="A";rec="Good investment"} else if (sc>=3){grade="B";rec="Moderate investment"}
+
+  document.getElementById("inv-grade-badge").textContent = grade;
+  document.getElementById("inv-grade-badge").className = `grade-badge grade-${grade.replace("+","plus")}`;
+  document.getElementById("inv-rec").textContent = rec;
+  document.getElementById("inv-grade-text").textContent = `Investment Grade — ${city}`;
+
+  const rows = [
+    ["Gross Annual Rent", formatINR(grossRent), `${grossYield}% yield`],
+    ["Net Annual Rent",   formatINR(netRent),   `${netYield}% net yield`],
+    ["Projected Value (5yr)",  formatINR(proj5),  `ROI: ${roi5}%`],
+    ["Projected Value (10yr)", formatINR(proj10), `ROI: ${roi10}%`],
+    ["Loan Amount",   formatINR(loan),  "80% LTV"],
+    ["Monthly EMI",   formatINR(emi),   `${tenure}yr tenure`],
+    ["Break-even",    `${breakeven} yrs`, "Rental income vs down payment"],
+  ];
+  document.getElementById("inv-table").innerHTML =
+    rows.map(([l,v,s]) => `<tr><td style="color:var(--muted)">${l}</td><td style="font-weight:600">${v}</td><td style="color:var(--muted);font-size:.8rem">${s}</td></tr>`).join("");
+
+  document.getElementById("inv-result-card").style.display = "block";
+  document.getElementById("inv-chart-card").style.display = "block";
+
+  // Projection chart
+  const yrs = Array.from({length:11},(_,i)=>2024+i);
+  const vals = yrs.map((_,i) => Math.round(price * Math.pow(1+appr,i) / 100000));
+  const cumRent = yrs.map((_,i) => Math.round(netRent * i / 100000));
+
+  const ctx = document.getElementById("projectionChart").getContext("2d");
+  if (projChart) projChart.destroy();
+  projChart = new Chart(ctx, {
+    type:"line",
+    data:{
+      labels: yrs.map(y=>y.toString()),
+      datasets:[
+        {label:"Property Value (₹L)",data:vals,borderColor:"#6c47ff",tension:.4,fill:true,
+          backgroundColor:"rgba(108,71,255,.08)",pointRadius:4},
+        {label:"Cumulative Rent (₹L)",data:cumRent,borderColor:"#00d4a8",tension:.4,fill:false,pointRadius:4}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:"top"}},
+      scales:{
+        y:{grid:{color:CHART_DEFAULTS.gridColor},ticks:{callback:v=>`₹${v}L`}},
+        x:{grid:{display:false}}
+      }
+    }
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   ANOMALY DETECTION SECTION
+══════════════════════════════════════════════════════════════ */
+let anomalyInit = false;
+function initAnomalySection() {
+  if (anomalyInit) return; anomalyInit = true;
+
+  // City anomaly bars
+  const cityAnomalyCounts = [12,10,9,8,9,11,10,9,8,11];
+  const cityAnomalyPct    = cityAnomalyCounts.map((c,i)=>(c/200*100).toFixed(1));
+  const barsHtml = CITIES.map((city,i) => `
+    <div class="anomaly-row">
+      <div style="width:90px;font-size:.82rem">${city}</div>
+      <div class="anomaly-bar-wrap">
+        <div class="anomaly-bar" style="width:${cityAnomalyPct[i]*5}%;background:${palette[i]}"></div>
+      </div>
+      <div style="width:60px;text-align:right;font-size:.82rem;font-weight:600">${cityAnomalyPct[i]}%</div>
+    </div>
+  `).join("");
+  document.getElementById("anomaly-city-bars").innerHTML = barsHtml;
+
+  // Method breakdown
+  new Chart(document.getElementById("anomalyMethodChart"), {
+    type:"pie",
+    data:{
+      labels:["Isolation Forest","Z-Score","IQR Fence","Domain Rules"],
+      datasets:[{data:[54,43,38,22],backgroundColor:["#6c47ff","#ff6b6b","#f5c842","#00d4a8"],borderWidth:0}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:"right",labels:{padding:16,usePointStyle:true}}},cutout:"50%"}
+  });
+
+  // Sample anomaly table
+  const samples = [
+    {id:"PROP00042",city:"Mumbai",type:"Penthouse",price:"₹4.2 Cr",ppsf:"₹52,000",score:"-0.41",method:"IF + Z-Score",status:"high"},
+    {id:"PROP00187",city:"Pune",type:"Apartment",price:"₹2.1 L",ppsf:"₹175",score:"-0.58",method:"Domain Rules",status:"high"},
+    {id:"PROP00391",city:"Delhi",type:"Villa",price:"₹8.9 Cr",ppsf:"₹89,000",score:"-0.35",method:"IQR Fence",status:"medium"},
+    {id:"PROP00512",city:"Bangalore",type:"Studio",price:"₹5.8 L",ppsf:"₹580",score:"-0.29",method:"Z-Score",status:"medium"},
+    {id:"PROP00733",city:"Hyderabad",type:"Apartment",price:"₹1.05 Cr",ppsf:"₹8,750",score:"-0.19",method:"IF",status:"low"},
+    {id:"PROP01024",city:"Chennai",type:"Ind. House",price:"₹3.8 Cr",ppsf:"₹38,000",score:"-0.44",method:"IF + IQR",status:"high"},
+  ];
+  document.getElementById("anomaly-tbody").innerHTML = samples.map(r => {
+    const badge = r.status==="high"?"badge-red":r.status==="medium"?"badge-gold":"badge-blue";
+    return `<tr>
+      <td><code style="color:var(--accent);font-size:.8rem">${r.id}</code></td>
+      <td>${r.city}</td><td>${r.type}</td><td>${r.price}</td><td>${r.ppsf}</td>
+      <td style="color:var(--accent3);font-weight:600">${r.score}</td>
+      <td><span class="badge badge-blue">${r.method}</span></td>
+      <td><span class="badge ${badge}">${r.status.charAt(0).toUpperCase()+r.status.slice(1)} Risk</span></td>
+    </tr>`;
+  }).join("");
+}
+
+/* ══════════════════════════════════════════════════════════════
+   MARKET HEATMAP
+══════════════════════════════════════════════════════════════ */
+let marketInit = false;
+let rankChartInst = null, yieldChartInst = null;
+function initMarket() {
+  if (marketInit) return; marketInit = true;
+
+  // Heatmap cells
+  const maxPrice = Math.max(...AVG_PPSF);
+  const html = CITIES.map((city,i) => {
+    const intensity = AVG_PPSF[i] / maxPrice;
+    const bg = `rgba(108,71,255,${0.1 + intensity*0.7})`;
+    return `<div class="heat-cell" style="background:${bg}">
+      <div class="heat-city">${city}</div>
+      <div class="heat-price">₹${AVG_PRICE[i]}L avg</div>
+      <div class="heat-ppsf">₹${AVG_PPSF[i].toLocaleString("en-IN")}/sqft</div>
+    </div>`;
+  }).join("");
+  document.getElementById("heatmap-grid").innerHTML = html;
+
+  // Price per sqft ranking
+  const sorted = CITIES.map((c,i)=>({city:c,ppsf:AVG_PPSF[i]})).sort((a,b)=>b.ppsf-a.ppsf);
+  rankChartInst = new Chart(document.getElementById("rankChart"), {
+    type:"bar",
+    data:{
+      labels:sorted.map(s=>s.city),
+      datasets:[{label:"₹/sqft",data:sorted.map(s=>s.ppsf),backgroundColor:palette,borderRadius:6}]
+    },
+    options:{
+      indexAxis:"y",responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{x:{grid:{color:CHART_DEFAULTS.gridColor},ticks:{callback:v=>`₹${(v/1000).toFixed(0)}K`}},y:{grid:{display:false}}}
+    }
+  });
+
+  // Rental yield
+  yieldChartInst = new Chart(document.getElementById("yieldChart"), {
+    type:"bar",
+    data:{
+      labels:CITIES,
+      datasets:[{label:"Net Rental Yield (%)",data:YIELDS,backgroundColor:YIELDS.map(y=>y>4?"#00d4a8":"#6c47ff"),borderRadius:6}]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        y:{grid:{color:CHART_DEFAULTS.gridColor},ticks:{callback:v=>`${v}%`},min:0,max:6},
+        x:{grid:{display:false}}
+      }
+    }
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════════════════════════ */
+function formatINR(num) {
+  num = Math.round(num);
+  if (num >= 10000000) return `₹${(num/10000000).toFixed(2)} Cr`;
+  if (num >= 100000)   return `₹${(num/100000).toFixed(2)} L`;
+  return `₹${num.toLocaleString("en-IN")}`;
+}
+</script>
+</body>
+</html>
