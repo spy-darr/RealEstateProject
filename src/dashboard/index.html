@@ -1,1046 +1,1596 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>PropSense AI — Real Estate Analytics</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>PropSense AI — Real Estate Analytics Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-/* ─── Design tokens ───────────────────────────────────────────── */
-:root {
-  --bg:         #09090f;
-  --surface:    #111118;
-  --surface2:   #1a1a26;
-  --border:     rgba(255,255,255,.07);
-  --accent:     #6c47ff;
-  --accent2:    #00d4a8;
-  --accent3:    #ff6b6b;
-  --text:       #e8e8f0;
-  --muted:      #6b6b80;
-  --gold:       #f5c842;
-  --radius:     14px;
-  --glow:       0 0 40px rgba(108,71,255,.25);
+/* ══════════════ TOKENS ══════════════ */
+:root{
+  --bg:#07070f;--surface:#0f0f1a;--surface2:#161625;--surface3:#1e1e30;
+  --border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.12);
+  --accent:#6c47ff;--accent2:#00d4a8;--accent3:#ff6b6b;--gold:#f5c842;
+  --text:#e8e8f2;--muted:#7070a0;--radius:14px;
+  --shadow:0 8px 32px rgba(0,0,0,.5);
 }
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 80% 50% at 20% -10%,rgba(108,71,255,.08),transparent),
+             radial-gradient(ellipse 60% 40% at 80% 110%,rgba(0,212,168,.06),transparent);opacity:1}
 
-body {
-  font-family: "DM Sans", sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  overflow-x: hidden;
-}
+/* ══════════════ SIDEBAR ══════════════ */
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:248px;background:var(--surface);
+  border-right:1px solid var(--border);display:flex;flex-direction:column;padding:0;z-index:200}
+.sidebar-logo{padding:24px 22px 22px;border-bottom:1px solid var(--border)}
+.sidebar-logo h1{font-family:"Syne",sans-serif;font-weight:800;font-size:1.45rem;line-height:1;
+  background:linear-gradient(135deg,#a78bfa,var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sidebar-logo .tagline{font-size:.68rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-top:4px}
+.nav{padding:14px 10px;flex:1;overflow-y:auto}
+.nav-section{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;
+  padding:12px 12px 6px;font-weight:600}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;
+  font-size:.875rem;font-weight:500;color:var(--muted);transition:all .18s;
+  border:none;background:none;width:100%;text-align:left;position:relative}
+.nav-item:hover{color:var(--text);background:var(--surface2)}
+.nav-item.active{color:#fff;background:linear-gradient(135deg,rgba(108,71,255,.25),rgba(0,212,168,.1));
+  border:1px solid rgba(108,71,255,.3)}
+.nav-item .icon{font-size:1rem;width:22px;text-align:center;flex-shrink:0}
+.nav-badge{margin-left:auto;background:var(--accent);color:#fff;font-size:.6rem;
+  padding:2px 6px;border-radius:10px;font-weight:700}
+.sidebar-footer{padding:16px 22px;border-top:1px solid var(--border);font-size:.7rem;color:var(--muted);line-height:1.6}
 
-/* ─── Noise texture overlay ──────────────────────────────────── */
-body::before {
-  content: "";
-  position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='.04'/%3E%3C/svg%3E");
-  opacity: .6;
-}
+/* ══════════════ MAIN ══════════════ */
+.main{margin-left:248px;min-height:100vh;position:relative;z-index:1}
+.page-wrap{padding:36px 44px;max-width:1400px}
 
-/* ─── Sidebar ────────────────────────────────────────────────── */
-.sidebar {
-  position: fixed; left: 0; top: 0; bottom: 0; width: 240px;
-  background: var(--surface);
-  border-right: 1px solid var(--border);
-  display: flex; flex-direction: column;
-  padding: 28px 0; z-index: 100;
-}
-.sidebar-logo {
-  padding: 0 24px 28px;
-  border-bottom: 1px solid var(--border);
-}
-.sidebar-logo h1 {
-  font-family: "Syne", sans-serif;
-  font-weight: 800; font-size: 1.4rem;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-}
-.sidebar-logo span { font-size: .72rem; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
-.nav { padding: 20px 12px; flex: 1; }
-.nav-item {
-  display: flex; align-items: center; gap: 12px;
-  padding: 11px 14px; border-radius: 10px; cursor: pointer;
-  font-size: .88rem; font-weight: 500; color: var(--muted);
-  transition: all .2s; margin-bottom: 4px; border: none; background: none; width: 100%; text-align: left;
-}
-.nav-item:hover { color: var(--text); background: var(--surface2); }
-.nav-item.active { color: var(--text); background: rgba(108,71,255,.18); }
-.nav-item .icon { font-size: 1.1rem; width: 20px; text-align: center; }
-.sidebar-footer { padding: 20px 24px; border-top: 1px solid var(--border); font-size: .72rem; color: var(--muted); }
+/* ══════════════ SECTIONS ══════════════ */
+.section{display:none}.section.active{display:block;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
-/* ─── Main ───────────────────────────────────────────────────── */
-.main { margin-left: 240px; padding: 40px 48px; min-height: 100vh; position: relative; z-index: 1; }
+/* ══════════════ PAGE HEADER ══════════════ */
+.page-header{margin-bottom:32px;display:flex;justify-content:space-between;align-items:flex-start}
+.page-header h2{font-family:"Syne",sans-serif;font-size:1.9rem;font-weight:700}
+.page-header p{color:var(--muted);font-size:.875rem;margin-top:4px}
+.header-actions{display:flex;gap:10px;flex-shrink:0}
 
-/* ─── Section management ─────────────────────────────────────── */
-.section { display: none; }
-.section.active { display: block; }
+/* ══════════════ STAT CARDS ══════════════ */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:20px;position:relative;overflow:hidden;cursor:default}
+.stat-card::after{content:"";position:absolute;top:-30px;right:-30px;width:80px;height:80px;
+  border-radius:50%;background:var(--c,var(--accent));opacity:.08;transition:opacity .3s}
+.stat-card:hover::after{opacity:.14}
+.stat-label{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.stat-value{font-family:"Syne",sans-serif;font-size:1.65rem;font-weight:700;line-height:1}
+.stat-sub{font-size:.75rem;color:var(--muted);margin-top:6px}
+.up{color:var(--accent2)}.down{color:var(--accent3)}
 
-/* ─── Page header ────────────────────────────────────────────── */
-.page-header { margin-bottom: 36px; }
-.page-header h2 {
-  font-family: "Syne", sans-serif; font-size: 2rem; font-weight: 700; margin-bottom: 6px;
-}
-.page-header p { color: var(--muted); font-size: .9rem; }
+/* ══════════════ CARDS ══════════════ */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:22px}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.card-title{font-family:"Syne",sans-serif;font-size:1rem;font-weight:600}
+.card-actions{display:flex;gap:8px}
 
-/* ─── Stat cards ─────────────────────────────────────────────── */
-.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 36px; }
-.stat-card {
-  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-  padding: 22px 24px; position: relative; overflow: hidden;
-}
-.stat-card::before {
-  content: ""; position: absolute; top: -40px; right: -40px;
-  width: 100px; height: 100px; border-radius: 50%;
-  background: var(--c, var(--accent)); opacity: .07;
-}
-.stat-label { font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
-.stat-value { font-family: "Syne", sans-serif; font-size: 1.75rem; font-weight: 700; }
-.stat-sub { font-size: .78rem; color: var(--muted); margin-top: 4px; }
-.stat-up { color: var(--accent2); } .stat-down { color: var(--accent3); }
+/* ══════════════ GRID ══════════════ */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
 
-/* ─── Cards / panels ─────────────────────────────────────────── */
-.card {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 28px; margin-bottom: 24px;
-}
-.card-title { font-family: "Syne", sans-serif; font-size: 1.05rem; font-weight: 600; margin-bottom: 20px; }
+/* ══════════════ FORMS ══════════════ */
+.form-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.field input,.field select,.field textarea{
+  background:var(--surface2);border:1px solid var(--border);color:var(--text);
+  padding:10px 14px;border-radius:10px;font-family:inherit;font-size:.875rem;transition:border-color .2s,box-shadow .2s}
+.field input:focus,.field select:focus,.field textarea:focus{
+  outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(108,71,255,.15)}
+.field select option{background:var(--surface2)}
+.field textarea{resize:vertical;min-height:80px}
 
-/* ─── Grid layouts ────────────────────────────────────────────── */
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-.grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 18px; }
+/* ══════════════ BUTTONS ══════════════ */
+.btn{padding:10px 22px;border-radius:10px;border:none;cursor:pointer;
+  font-family:"Syne",sans-serif;font-size:.85rem;font-weight:600;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:linear-gradient(135deg,var(--accent),#8b64ff);color:#fff;
+  box-shadow:0 4px 18px rgba(108,71,255,.35)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(108,71,255,.45)}
+.btn-success{background:linear-gradient(135deg,#059669,var(--accent2));color:#fff}
+.btn-success:hover{transform:translateY(-2px)}
+.btn-outline{background:transparent;color:var(--accent);border:1px solid rgba(108,71,255,.4)}
+.btn-outline:hover{background:rgba(108,71,255,.1)}
+.btn-ghost{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.btn-ghost:hover{border-color:var(--border2)}
+.btn-sm{padding:7px 16px;font-size:.78rem}
+.btn-danger{background:rgba(255,107,107,.15);color:var(--accent3);border:1px solid rgba(255,107,107,.3)}
+.btn-danger:hover{background:rgba(255,107,107,.25)}
 
-/* ─── Form elements ──────────────────────────────────────────── */
-.form-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 18px; }
-.field { display: flex; flex-direction: column; gap: 6px; }
-.field label { font-size: .78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
-.field input, .field select {
-  background: var(--surface2); border: 1px solid var(--border);
-  color: var(--text); padding: 10px 14px; border-radius: 10px;
-  font-family: inherit; font-size: .9rem;
-  transition: border-color .2s;
-}
-.field input:focus, .field select:focus { outline: none; border-color: var(--accent); }
-.field select option { background: var(--surface2); }
+/* ══════════════ BADGES ══════════════ */
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:600;gap:4px}
+.badge-green{background:rgba(0,212,168,.15);color:var(--accent2)}
+.badge-red{background:rgba(255,107,107,.15);color:var(--accent3)}
+.badge-blue{background:rgba(108,71,255,.15);color:#a78bfa}
+.badge-gold{background:rgba(245,200,66,.15);color:var(--gold)}
+.badge-gray{background:rgba(255,255,255,.07);color:var(--muted)}
 
-/* ─── Buttons ────────────────────────────────────────────────── */
-.btn {
-  padding: 12px 28px; border-radius: 10px; border: none; cursor: pointer;
-  font-family: "Syne", sans-serif; font-size: .9rem; font-weight: 600;
-  transition: all .2s;
-}
-.btn-primary {
-  background: linear-gradient(135deg, var(--accent), #8b64ff);
-  color: #fff; box-shadow: 0 4px 20px rgba(108,71,255,.35);
-}
-.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(108,71,255,.45); }
-.btn-outline {
-  background: transparent; color: var(--accent);
-  border: 1px solid var(--accent);
-}
-.btn-outline:hover { background: rgba(108,71,255,.1); }
+/* ══════════════ TABLE ══════════════ */
+.tbl{width:100%;border-collapse:collapse;font-size:.84rem}
+.tbl th{background:var(--surface2);color:var(--muted);font-weight:600;padding:10px 14px;
+  text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border)}
+.tbl td{padding:11px 14px;border-bottom:1px solid var(--border)}
+.tbl tr:last-child td{border:none}
+.tbl tr:hover td{background:rgba(255,255,255,.02);cursor:pointer}
 
-/* ─── Result box ─────────────────────────────────────────────── */
-.result-box {
-  background: linear-gradient(135deg, rgba(108,71,255,.12), rgba(0,212,168,.08));
-  border: 1px solid rgba(108,71,255,.3); border-radius: var(--radius);
-  padding: 28px; text-align: center; display: none;
-}
-.result-box.show { display: block; animation: fadeUp .4s ease; }
-.result-price {
-  font-family: "Syne", sans-serif; font-size: 2.8rem; font-weight: 800;
-  background: linear-gradient(135deg, var(--accent2), var(--accent));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-}
-.result-range { color: var(--muted); font-size: .88rem; margin-top: 8px; }
-.result-meta { display: flex; justify-content: center; gap: 36px; margin-top: 20px; }
-.result-meta-item { text-align: center; }
-.result-meta-item .val { font-family: "Syne",sans-serif; font-size: 1.1rem; font-weight: 600; }
-.result-meta-item .lbl { font-size: .72rem; color: var(--muted); text-transform: uppercase; }
+/* ══════════════ CHARTS ══════════════ */
+.chart-wrap{position:relative;height:260px}
+.chart-wrap.tall{height:320px}
 
-/* ─── Table ──────────────────────────────────────────────────── */
-.data-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
-.data-table th {
-  background: var(--surface2); color: var(--muted); font-weight: 500;
-  padding: 10px 14px; text-align: left; font-size: .75rem; text-transform: uppercase; letter-spacing: .04em;
-}
-.data-table td { padding: 11px 14px; border-bottom: 1px solid var(--border); }
-.data-table tr:last-child td { border: none; }
-.data-table tr:hover td { background: rgba(255,255,255,.02); }
-.badge {
-  display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: .72rem; font-weight: 600;
-}
-.badge-green { background: rgba(0,212,168,.15); color: var(--accent2); }
-.badge-red   { background: rgba(255,107,107,.15); color: var(--accent3); }
-.badge-blue  { background: rgba(108,71,255,.15);  color: #a78bfa; }
-.badge-gold  { background: rgba(245,200,66,.15);  color: var(--gold); }
+/* ══════════════ PROPERTY CARDS ══════════════ */
+.prop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
+.prop-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  overflow:hidden;cursor:pointer;transition:border-color .25s,transform .25s,box-shadow .25s}
+.prop-card:hover{border-color:var(--accent);transform:translateY(-4px);box-shadow:0 16px 40px rgba(0,0,0,.5)}
+.prop-img{width:100%;height:180px;object-fit:cover;background:var(--surface2);display:block}
+.prop-img-placeholder{width:100%;height:180px;background:linear-gradient(135deg,var(--surface2),var(--surface3));
+  display:flex;align-items:center;justify-content:center;font-size:2.5rem}
+.prop-body{padding:16px}
+.prop-status{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.prop-title{font-family:"Syne",sans-serif;font-size:.95rem;font-weight:700;margin-bottom:4px;line-height:1.3}
+.prop-location{font-size:.78rem;color:var(--muted);margin-bottom:10px}
+.prop-price{font-family:"Syne",sans-serif;font-size:1.25rem;font-weight:800;
+  background:linear-gradient(135deg,var(--accent2),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.prop-meta{display:flex;gap:12px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.prop-meta-item{font-size:.75rem;color:var(--muted);display:flex;align-items:center;gap:4px}
+.prop-yield{display:flex;justify-content:space-between;align-items:center;
+  background:var(--surface2);border-radius:8px;padding:8px 12px;margin-top:10px}
+.prop-yield-label{font-size:.72rem;color:var(--muted)}
+.prop-yield-value{font-size:.82rem;font-weight:600;color:var(--accent2)}
 
-/* ─── Investment grade badge ─────────────────────────────────── */
-.grade-badge {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 52px; height: 52px; border-radius: 50%;
-  font-family: "Syne",sans-serif; font-size: 1.2rem; font-weight: 800;
-}
-.grade-Aplus { background: rgba(0,212,168,.15); color: var(--accent2); border: 2px solid var(--accent2); }
-.grade-A     { background: rgba(108,71,255,.15); color: #a78bfa;       border: 2px solid #a78bfa; }
-.grade-B     { background: rgba(245,200,66,.15); color: var(--gold);   border: 2px solid var(--gold); }
-.grade-C     { background: rgba(255,107,107,.15); color: var(--accent3); border: 2px solid var(--accent3); }
+/* ══════════════ MODAL ══════════════ */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;
+  display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.modal-overlay.open{display:flex;animation:fadeIn .25s ease}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:20px;
+  width:100%;max-width:880px;max-height:90vh;overflow-y:auto;position:relative}
+.modal-header{padding:24px 28px;border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:flex-start;position:sticky;top:0;
+  background:var(--surface);z-index:10;border-radius:20px 20px 0 0}
+.modal-title{font-family:"Syne",sans-serif;font-size:1.2rem;font-weight:700}
+.modal-close{background:var(--surface2);border:1px solid var(--border);color:var(--muted);
+  width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.modal-close:hover{color:var(--text);border-color:var(--border2)}
+.modal-body{padding:28px}
+.modal-img-strip{display:flex;gap:10px;margin-bottom:22px}
+.modal-img{width:49%;border-radius:12px;object-fit:cover;height:200px}
+.modal-img-single{width:100%;border-radius:12px;object-fit:cover;height:220px}
+.modal-section{margin-bottom:22px}
+.modal-section-title{font-family:"Syne",sans-serif;font-size:.82rem;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--muted);margin-bottom:12px;font-weight:600}
+.modal-specs{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.modal-spec{background:var(--surface2);border-radius:10px;padding:12px;text-align:center}
+.modal-spec-val{font-family:"Syne",sans-serif;font-size:1.1rem;font-weight:700}
+.modal-spec-lbl{font-size:.68rem;color:var(--muted);margin-top:2px}
+.modal-nearby{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.nearby-item{background:var(--surface2);border-radius:8px;padding:10px 12px;font-size:.8rem}
+.nearby-label{color:var(--muted);font-size:.68rem;margin-bottom:2px}
+.modal-invest-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.invest-box{background:linear-gradient(135deg,var(--surface2),var(--surface3));
+  border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center}
+.invest-val{font-family:"Syne",sans-serif;font-size:1.3rem;font-weight:800}
+.invest-lbl{font-size:.7rem;color:var(--muted);margin-top:3px}
+.modal-bank-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:14px}
 
-/* ─── Chart containers ───────────────────────────────────────── */
-.chart-wrap { position: relative; height: 260px; }
+/* ══════════════ BANKING CARDS ══════════════ */
+.bank-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;
+  padding:16px;cursor:pointer;transition:border-color .2s,transform .2s}
+.bank-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.bank-card.selected{border-color:var(--accent);background:rgba(108,71,255,.08)}
+.bank-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.bank-logo{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-family:"Syne",sans-serif;font-size:.72rem;font-weight:800;color:#fff}
+.bank-name{font-family:"Syne",sans-serif;font-size:.9rem;font-weight:700}
+.bank-scheme{font-size:.75rem;color:var(--muted);margin-top:1px}
+.bank-rate{font-family:"Syne",sans-serif;font-size:1.4rem;font-weight:800;color:var(--accent2)}
+.bank-rate-label{font-size:.7rem;color:var(--muted)}
+.bank-details{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.bank-detail-item{font-size:.75rem}
+.bank-detail-label{color:var(--muted);font-size:.68rem}
+.bank-features{margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.bank-feature{font-size:.75rem;color:var(--muted);padding:2px 0;display:flex;align-items:flex-start;gap:6px}
+.bank-feature::before{content:"✓";color:var(--accent2);flex-shrink:0;margin-top:1px}
+.bank-govt-badge{background:linear-gradient(135deg,#ff6600,#ff9900);color:#fff;
+  font-size:.65rem;padding:2px 8px;border-radius:10px;font-weight:700}
 
-/* ─── Market heatmap ─────────────────────────────────────────── */
-.heatmap-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 12px; }
-.heat-cell {
-  border-radius: 10px; padding: 16px 12px; text-align: center; cursor: pointer;
-  transition: transform .2s;
-}
-.heat-cell:hover { transform: scale(1.04); }
-.heat-city { font-family: "Syne",sans-serif; font-size: .82rem; font-weight: 600; margin-bottom: 4px; }
-.heat-price { font-size: .75rem; opacity: .8; }
-.heat-ppsf  { font-size: .68rem; opacity: .65; margin-top: 2px; }
+/* ══════════════ EMI CALCULATOR ══════════════ */
+.emi-result{background:linear-gradient(135deg,rgba(108,71,255,.1),rgba(0,212,168,.06));
+  border:1px solid rgba(108,71,255,.2);border-radius:12px;padding:20px;margin-top:16px}
+.emi-amount{font-family:"Syne",sans-serif;font-size:2rem;font-weight:800;
+  background:linear-gradient(135deg,var(--accent2),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.emi-breakdown{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px}
+.emi-break-item{text-align:center}
+.emi-break-val{font-family:"Syne",sans-serif;font-size:1rem;font-weight:700}
+.emi-break-lbl{font-size:.7rem;color:var(--muted);margin-top:2px}
 
-/* ─── Anomaly meter ──────────────────────────────────────────── */
-.anomaly-row {
-  display: flex; align-items: center; gap: 14px;
-  padding: 12px 0; border-bottom: 1px solid var(--border);
-}
-.anomaly-row:last-child { border: none; }
-.anomaly-bar-wrap { flex: 1; background: var(--surface2); border-radius: 4px; height: 6px; }
-.anomaly-bar { height: 6px; border-radius: 4px; }
+/* ══════════════ DATA MANAGER ══════════════ */
+.data-toolbar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.search-input{background:var(--surface2);border:1px solid var(--border);color:var(--text);
+  padding:9px 14px;border-radius:10px;font-family:inherit;font-size:.875rem;width:240px}
+.search-input:focus{outline:none;border-color:var(--accent)}
 
-/* ─── Recommendation card ────────────────────────────────────── */
-.rec-card {
-  background: var(--surface2); border: 1px solid var(--border);
-  border-radius: 12px; padding: 18px; cursor: pointer;
-  transition: border-color .2s, transform .2s;
-}
-.rec-card:hover { border-color: var(--accent); transform: translateY(-3px); }
-.rec-sim { font-size: .75rem; color: var(--accent2); font-weight: 600; margin-bottom: 8px; }
-.rec-name { font-family: "Syne",sans-serif; font-size: .95rem; font-weight: 600; margin-bottom: 4px; }
-.rec-details { font-size: .8rem; color: var(--muted); line-height: 1.6; }
-.rec-price { font-family: "Syne",sans-serif; color: var(--accent); font-size: 1.1rem; font-weight: 700; margin-top: 10px; }
+/* ══════════════ TABS ══════════════ */
+.tabs{display:flex;gap:4px;background:var(--surface2);padding:4px;border-radius:12px;margin-bottom:22px;width:fit-content}
+.tab{padding:8px 18px;border-radius:9px;cursor:pointer;font-size:.84rem;font-weight:600;
+  color:var(--muted);border:none;background:none;font-family:"Syne",sans-serif;transition:all .2s}
+.tab.active{background:var(--surface);color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,.3)}
 
-/* ─── Loading spinner ────────────────────────────────────────── */
-.spinner { display: none; text-align: center; padding: 20px; }
-.spinner.show { display: block; }
-.spinner svg { animation: spin 1s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-@keyframes fadeUp { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: none; } }
+/* ══════════════ RESULT BOXES ══════════════ */
+.result-reveal{display:none;animation:fadeIn .4s ease}.result-reveal.show{display:block}
+.price-hero{text-align:center;padding:24px;background:linear-gradient(135deg,rgba(108,71,255,.1),rgba(0,212,168,.07));
+  border:1px solid rgba(108,71,255,.2);border-radius:14px;margin-bottom:20px}
+.price-label{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.price-big{font-family:"Syne",sans-serif;font-size:3rem;font-weight:800;line-height:1;
+  background:linear-gradient(135deg,#a78bfa,var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.price-range{font-size:.85rem;color:var(--muted);margin-top:6px}
+.price-row{display:flex;justify-content:center;gap:40px;margin-top:18px}
+.price-meta{text-align:center}
+.price-meta .v{font-family:"Syne",sans-serif;font-size:1.1rem;font-weight:700}
+.price-meta .l{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
 
-/* ─── Responsive ─────────────────────────────────────────────── */
-@media(max-width:1100px) {
-  .stats-grid { grid-template-columns: repeat(2,1fr); }
-  .form-row   { grid-template-columns: repeat(2,1fr); }
-}
-@media(max-width:768px) {
-  .sidebar { display: none; }
-  .main    { margin-left: 0; padding: 24px 20px; }
-  .grid-2  { grid-template-columns: 1fr; }
-}
+/* ══════════════ ANOMALY BARS ══════════════ */
+.anom-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.anom-row:last-child{border:none}
+.anom-bar-wrap{flex:1;background:var(--surface2);border-radius:4px;height:6px;overflow:hidden}
+.anom-bar{height:6px;border-radius:4px;transition:width .8s ease}
+
+/* ══════════════ HEATMAP ══════════════ */
+.heat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.heat-cell{border-radius:12px;padding:16px 12px;text-align:center;cursor:pointer;transition:transform .2s}
+.heat-cell:hover{transform:scale(1.06)}
+.heat-city{font-family:"Syne",sans-serif;font-size:.82rem;font-weight:700;margin-bottom:4px}
+.heat-price{font-size:.75rem;opacity:.85}
+.heat-ppsf{font-size:.68rem;opacity:.65;margin-top:2px}
+
+/* ══════════════ SPINNER ══════════════ */
+.spinner{display:none;text-align:center;padding:24px}.spinner.show{display:block}
+.spin-svg{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ══════════════ TOAST ══════════════ */
+.toast{position:fixed;bottom:28px;right:28px;background:var(--surface);border:1px solid var(--border2);
+  border-radius:12px;padding:14px 20px;font-size:.85rem;z-index:9999;transform:translateY(80px);
+  opacity:0;transition:all .3s;box-shadow:var(--shadow);max-width:320px}
+.toast.show{transform:none;opacity:1}
+.toast.success{border-color:rgba(0,212,168,.4);color:var(--accent2)}
+.toast.error{border-color:rgba(255,107,107,.4);color:var(--accent3)}
+
+/* ══════════════ GRADE BADGE ══════════════ */
+.grade-ring{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-family:"Syne",sans-serif;font-size:1.15rem;font-weight:800;flex-shrink:0}
+.g-Aplus{background:rgba(0,212,168,.12);color:var(--accent2);border:2px solid var(--accent2)}
+.g-A{background:rgba(108,71,255,.12);color:#a78bfa;border:2px solid #a78bfa}
+.g-B{background:rgba(245,200,66,.12);color:var(--gold);border:2px solid var(--gold)}
+.g-C{background:rgba(255,107,107,.12);color:var(--accent3);border:2px solid var(--accent3)}
+
+/* ══════════════ RESPONSIVE ══════════════ */
+@media(max-width:1200px){.stats-grid{grid-template-columns:repeat(2,1fr)}.form-row{grid-template-columns:1fr 1fr}}
+@media(max-width:900px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr}.modal-specs{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:768px){.sidebar{display:none}.main{margin-left:0}.page-wrap{padding:20px 16px}}
 </style>
 </head>
 <body>
 
-<!-- ══════════════ SIDEBAR ══════════════ -->
+<!-- ══════════════════════ SIDEBAR ══════════════════════ -->
 <aside class="sidebar">
   <div class="sidebar-logo">
-    <h1>PropSense</h1>
-    <span>AI Real Estate Analytics</span>
+    <h1>PropSense AI</h1>
+    <div class="tagline">Real Estate Analytics v2.0</div>
   </div>
   <nav class="nav">
-    <button class="nav-item active" onclick="showSection('dashboard')">
-      <span class="icon">📊</span> Dashboard
-    </button>
-    <button class="nav-item" onclick="showSection('predict')">
-      <span class="icon">🏷️</span> Price Prediction
-    </button>
-    <button class="nav-item" onclick="showSection('recommend')">
-      <span class="icon">🔍</span> Recommendations
-    </button>
-    <button class="nav-item" onclick="showSection('investment')">
-      <span class="icon">📈</span> Investment Analysis
-    </button>
-    <button class="nav-item" onclick="showSection('anomaly')">
-      <span class="icon">⚠️</span> Anomaly Detection
-    </button>
-    <button class="nav-item" onclick="showSection('market')">
-      <span class="icon">🗺️</span> Market Heatmap
-    </button>
+    <div class="nav-section">Analytics</div>
+    <button class="nav-item active" onclick="showSection('dashboard',this)"><span class="icon">📊</span>Dashboard</button>
+    <button class="nav-item" onclick="showSection('market',this)"><span class="icon">🗺️</span>Market Heatmap</button>
+
+    <div class="nav-section">Properties</div>
+    <button class="nav-item" onclick="showSection('listings',this)"><span class="icon">🏠</span>Browse Listings<span class="nav-badge" id="listing-count">12</span></button>
+    <button class="nav-item" onclick="showSection('recommend',this)"><span class="icon">🔍</span>Recommendations</button>
+    <button class="nav-item" onclick="showSection('data-manager',this)"><span class="icon">✏️</span>Data Manager</button>
+
+    <div class="nav-section">AI Tools</div>
+    <button class="nav-item" onclick="showSection('predict',this)"><span class="icon">🏷️</span>Price Prediction</button>
+    <button class="nav-item" onclick="showSection('investment',this)"><span class="icon">📈</span>Investment Analysis</button>
+    <button class="nav-item" onclick="showSection('anomaly',this)"><span class="icon">⚠️</span>Anomaly Detection</button>
+
+    <div class="nav-section">Finance</div>
+    <button class="nav-item" onclick="showSection('banking',this)"><span class="icon">🏦</span>Banking Schemes</button>
+    <button class="nav-item" onclick="showSection('emi',this)"><span class="icon">🧮</span>EMI Calculator</button>
   </nav>
   <div class="sidebar-footer">
-    MCA Final Year Project<br>AI-Powered Real Estate Platform
+    MCA Final Year Project<br>AI-Powered Real Estate Platform<br>
+    <span style="color:var(--accent2);font-size:.68rem">● Demo Mode — Edit data/properties.json</span>
   </div>
 </aside>
 
-<!-- ══════════════ MAIN ══════════════ -->
+<!-- ══════════════════════ MAIN ══════════════════════ -->
 <main class="main">
+<div class="page-wrap">
 
-<!-- ── DASHBOARD ──────────────────────────────────────────── -->
+<!-- ═══════ DASHBOARD ═══════ -->
 <section id="dashboard" class="section active">
   <div class="page-header">
-    <h2>Market Overview</h2>
-    <p>Real-time analytics across 10 Indian cities · 2,000+ listings</p>
+    <div><h2>Market Overview</h2><p>AI-powered analytics across 10 Indian cities · 12 featured properties</p></div>
   </div>
-
   <div class="stats-grid">
-    <div class="stat-card" style="--c:var(--accent)">
-      <div class="stat-label">Avg Property Price</div>
-      <div class="stat-value">₹87.4L</div>
-      <div class="stat-sub stat-up">▲ 7.2% YoY appreciation</div>
-    </div>
-    <div class="stat-card" style="--c:var(--accent2)">
-      <div class="stat-label">Avg Price / sqft</div>
-      <div class="stat-value">₹9,840</div>
-      <div class="stat-sub stat-up">▲ 5.1% vs last quarter</div>
-    </div>
-    <div class="stat-card" style="--c:var(--gold)">
-      <div class="stat-label">Avg Rental Yield</div>
-      <div class="stat-value">3.4%</div>
-      <div class="stat-sub">Net yield after taxes &amp; maintenance</div>
-    </div>
-    <div class="stat-card" style="--c:var(--accent3)">
-      <div class="stat-label">Listings Analysed</div>
-      <div class="stat-value">2,000</div>
-      <div class="stat-sub stat-down">97 anomalies detected (4.85%)</div>
-    </div>
+    <div class="stat-card" style="--c:var(--accent)"><div class="stat-label">Avg Listed Price</div><div class="stat-value">₹87.4L</div><div class="stat-sub up">▲ 7.2% YoY</div></div>
+    <div class="stat-card" style="--c:var(--accent2)"><div class="stat-label">Avg ₹ / sqft</div><div class="stat-value">₹9,840</div><div class="stat-sub up">▲ 5.1% QoQ</div></div>
+    <div class="stat-card" style="--c:var(--gold)"><div class="stat-label">Avg Rental Yield</div><div class="stat-value">4.1%</div><div class="stat-sub">Net yield after tax</div></div>
+    <div class="stat-card" style="--c:var(--accent3)"><div class="stat-label">Active Listings</div><div class="stat-value" id="dash-active">11</div><div class="stat-sub">Available properties</div></div>
   </div>
-
   <div class="grid-2">
-    <div class="card">
-      <div class="card-title">Price Distribution by City</div>
-      <div class="chart-wrap">
-        <canvas id="cityPriceChart"></canvas>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-title">Property Type Mix</div>
-      <div class="chart-wrap">
-        <canvas id="typeDonut"></canvas>
-      </div>
-    </div>
+    <div class="card"><div class="card-header"><div class="card-title">Price by City</div></div><div class="chart-wrap"><canvas id="cityChart"></canvas></div></div>
+    <div class="card"><div class="card-header"><div class="card-title">Property Type Distribution</div></div><div class="chart-wrap"><canvas id="typeChart"></canvas></div></div>
   </div>
-
   <div class="grid-2">
-    <div class="card">
-      <div class="card-title">ML Model Performance Comparison</div>
-      <div class="chart-wrap">
-        <canvas id="modelChart"></canvas>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-title">Price Trend — Top 4 Cities</div>
-      <div class="chart-wrap">
-        <canvas id="trendChart"></canvas>
-      </div>
-    </div>
+    <div class="card"><div class="card-header"><div class="card-title">ML Model Accuracy Comparison</div></div><div class="chart-wrap"><canvas id="modelChart"></canvas></div></div>
+    <div class="card"><div class="card-header"><div class="card-title">5-Year Price Trend — Top Cities</div></div><div class="chart-wrap"><canvas id="trendChart"></canvas></div></div>
   </div>
 </section>
 
-<!-- ── PRICE PREDICTION ────────────────────────────────────── -->
-<section id="predict" class="section">
+<!-- ═══════ BROWSE LISTINGS ═══════ -->
+<section id="listings" class="section">
   <div class="page-header">
-    <h2>Price Prediction</h2>
-    <p>Enter property details to get an AI-powered valuation</p>
-  </div>
-
-  <div class="card">
-    <div class="card-title">Property Details</div>
-    <div class="form-row">
-      <div class="field">
-        <label>City</label>
-        <select id="p-city">
-          <option>Mumbai</option><option selected>Pune</option><option>Bangalore</option>
-          <option>Hyderabad</option><option>Chennai</option><option>Delhi</option>
-          <option>Kolkata</option><option>Ahmedabad</option><option>Jaipur</option><option>Surat</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Property Type</label>
-        <select id="p-type">
-          <option>Apartment</option><option>Villa</option>
-          <option>Independent House</option><option>Studio</option><option>Penthouse</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Bedrooms</label>
-        <select id="p-bed">
-          <option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Bathrooms</label>
-        <select id="p-bath">
-          <option>1</option><option selected>2</option><option>3</option><option>4</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Area (sqft)</label>
-        <input type="number" id="p-area" value="1200" min="200" max="10000"/>
-      </div>
-      <div class="field">
-        <label>Age (years)</label>
-        <input type="number" id="p-age" value="5" min="0" max="50"/>
-      </div>
-      <div class="field">
-        <label>Floor Number</label>
-        <input type="number" id="p-floor" value="4" min="0" max="50"/>
-      </div>
-      <div class="field">
-        <label>Total Floors</label>
-        <input type="number" id="p-totalfloor" value="12" min="1" max="60"/>
-      </div>
-      <div class="field">
-        <label>Location Score (0–10)</label>
-        <input type="number" id="p-loc" value="7.5" step="0.1" min="0" max="10"/>
-      </div>
-    </div>
-    <div class="form-row" style="grid-template-columns:1fr; margin-bottom:0">
-      <div class="field">
-        <label>Amenities (comma-separated)</label>
-        <input type="text" id="p-amenities" value="Gym, Parking, Security, Lift, CCTV"/>
-      </div>
-    </div>
-    <div style="margin-top:24px; display:flex; gap:14px; align-items:center">
-      <button class="btn btn-primary" onclick="runPrediction()">🧠 Predict Price</button>
-      <button class="btn btn-outline" onclick="resetPrediction()">Reset</button>
+    <div><h2>Property Listings</h2><p>Click any property to view details, investment analysis &amp; banking options</p></div>
+    <div class="header-actions">
+      <select id="filter-city" class="field" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px 14px;border-radius:10px;font-size:.85rem" onchange="filterListings()">
+        <option value="">All Cities</option>
+      </select>
+      <select id="filter-type" class="field" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px 14px;border-radius:10px;font-size:.85rem" onchange="filterListings()">
+        <option value="">All Types</option>
+        <option>Apartment</option><option>Villa</option><option>Independent House</option><option>Studio</option><option>Penthouse</option>
+      </select>
     </div>
   </div>
-
-  <div class="spinner" id="pred-spinner">
-    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2">
-      <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-    </svg>
-    <p style="color:var(--muted);font-size:.85rem;margin-top:8px">Analysing property …</p>
-  </div>
-
-  <div class="result-box" id="pred-result">
-    <div style="font-size:.82rem;color:var(--muted);margin-bottom:8px">ESTIMATED MARKET VALUE</div>
-    <div class="result-price" id="res-price">₹0</div>
-    <div class="result-range" id="res-range">Range: ₹0 – ₹0</div>
-    <div class="result-meta">
-      <div class="result-meta-item"><div class="val" id="res-ppsf">0</div><div class="lbl">₹/sqft</div></div>
-      <div class="result-meta-item"><div class="val" id="res-model">—</div><div class="lbl">Model Used</div></div>
-      <div class="result-meta-item"><div class="val" id="res-conf">±10%</div><div class="lbl">Confidence</div></div>
-    </div>
-  </div>
-
-  <div class="card" id="pred-chart-card" style="display:none">
-    <div class="card-title">Price Breakdown — Similar Properties</div>
-    <div class="chart-wrap"><canvas id="priceBreakdownChart"></canvas></div>
-  </div>
+  <div id="listings-grid" class="prop-grid"></div>
 </section>
 
-<!-- ── RECOMMENDATIONS ─────────────────────────────────────── -->
+<!-- ═══════ RECOMMENDATIONS ═══════ -->
 <section id="recommend" class="section">
   <div class="page-header">
-    <h2>Property Recommendations</h2>
-    <p>Find properties similar to your target listing</p>
+    <div><h2>Smart Recommendations</h2><p>Find the best matching properties — click any result to see full details &amp; banking options</p></div>
   </div>
   <div class="card">
-    <div class="card-title">Query Property</div>
+    <div class="card-title" style="margin-bottom:18px">Set Your Preferences</div>
     <div class="form-row">
-      <div class="field">
-        <label>City</label>
-        <select id="r-city">
-          <option>Mumbai</option><option selected>Pune</option><option>Bangalore</option>
-          <option>Hyderabad</option><option>Chennai</option><option>Delhi</option>
-        </select>
+      <div class="field"><label>City</label>
+        <select id="r-city"><option>All Cities</option><option>Mumbai</option><option selected>Pune</option><option>Bangalore</option><option>Hyderabad</option><option>Chennai</option><option>Delhi</option><option>Kolkata</option><option>Ahmedabad</option><option>Jaipur</option></select>
       </div>
-      <div class="field">
-        <label>Property Type</label>
-        <select id="r-type"><option>Apartment</option><option>Villa</option><option>Studio</option><option>Penthouse</option></select>
+      <div class="field"><label>Property Type</label>
+        <select id="r-type"><option value="">Any Type</option><option>Apartment</option><option>Villa</option><option>Independent House</option><option>Studio</option><option>Penthouse</option></select>
       </div>
-      <div class="field">
-        <label>Bedrooms</label>
-        <select id="r-bed"><option>1</option><option>2</option><option selected>3</option><option>4</option></select>
+      <div class="field"><label>Bedrooms</label>
+        <select id="r-bed"><option value="">Any</option><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select>
       </div>
-      <div class="field">
-        <label>Area (sqft)</label>
-        <input type="number" id="r-area" value="1200"/>
+      <div class="field"><label>Max Budget (₹)</label><input type="number" id="r-budget" value="15000000" step="500000"/></div>
+      <div class="field"><label>Min Area (sqft)</label><input type="number" id="r-area" value="800"/></div>
+      <div class="field"><label>Min Location Score</label><input type="number" id="r-locscore" value="7" min="0" max="10" step="0.5"/></div>
+    </div>
+    <div class="form-row" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:0">
+      <div class="field"><label>Sort By</label>
+        <select id="r-sort"><option value="sim">Best Match</option><option value="price_asc">Price: Low→High</option><option value="price_desc">Price: High→Low</option><option value="yield">Best Yield</option><option value="loc">Location Score</option></select>
       </div>
-      <div class="field">
-        <label>Budget (₹)</label>
-        <input type="number" id="r-price" value="8500000"/>
+      <div class="field"><label>Status</label>
+        <select id="r-status"><option value="">All</option><option value="available">Available Only</option></select>
       </div>
-      <div class="field">
-        <label>Top N Results</label>
-        <select id="r-topn">
-          <option>3</option><option selected>5</option><option>8</option><option>10</option>
-        </select>
+      <div class="field"><label>Amenity Must-Have</label>
+        <select id="r-amenity"><option value="">Any</option><option>Gym</option><option>Swimming Pool</option><option>Parking</option><option>Garden</option><option>Club House</option></select>
       </div>
     </div>
-    <button class="btn btn-primary" onclick="runRecommendation()">🔍 Find Similar Properties</button>
+    <div style="margin-top:18px;display:flex;gap:12px">
+      <button class="btn btn-primary" onclick="runRecommendation()">🔍 Find Best Properties</button>
+      <button class="btn btn-ghost btn-sm" onclick="clearRec()">Clear</button>
+    </div>
   </div>
-  <div id="rec-results" class="grid-3" style="margin-top:0"></div>
+  <div id="rec-count" style="color:var(--muted);font-size:.85rem;margin-bottom:14px;display:none"></div>
+  <div id="rec-results" class="prop-grid"></div>
 </section>
 
-<!-- ── INVESTMENT ANALYSIS ─────────────────────────────────── -->
-<section id="investment" class="section">
+<!-- ═══════ DATA MANAGER ═══════ -->
+<section id="data-manager" class="section">
   <div class="page-header">
-    <h2>Investment Analysis</h2>
-    <p>ROI projections, rental yield, and mortgage calculations</p>
-  </div>
-  <div class="grid-2">
-    <div class="card">
-      <div class="card-title">Property Parameters</div>
-      <div class="form-row" style="grid-template-columns:1fr 1fr">
-        <div class="field"><label>Purchase Price (₹)</label><input type="number" id="i-price" value="8500000"/></div>
-        <div class="field"><label>City</label>
-          <select id="i-city">
-            <option>Mumbai</option><option selected>Pune</option><option>Bangalore</option>
-            <option>Hyderabad</option><option>Chennai</option><option>Delhi</option>
-            <option>Kolkata</option><option>Ahmedabad</option><option>Jaipur</option><option>Surat</option>
-          </select>
-        </div>
-        <div class="field"><label>Annual Appreciation (%)</label><input type="number" id="i-appr" value="7" step="0.5"/></div>
-        <div class="field"><label>Rental Yield (%)</label><input type="number" id="i-yield" value="3.5" step="0.1"/></div>
-        <div class="field"><label>Loan Rate (%)</label><input type="number" id="i-rate" value="8.5" step="0.1"/></div>
-        <div class="field"><label>Tenure (years)</label><input type="number" id="i-tenure" value="20"/></div>
-      </div>
-      <button class="btn btn-primary" onclick="runInvestment()">📈 Calculate ROI</button>
-    </div>
-    <div class="card" id="inv-result-card" style="display:none">
-      <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
-        <div class="grade-badge" id="inv-grade-badge">A</div>
-        <div>
-          <div style="font-family:Syne,sans-serif;font-size:1.1rem;font-weight:700" id="inv-rec">—</div>
-          <div style="font-size:.78rem;color:var(--muted)" id="inv-grade-text">Investment Grade</div>
-        </div>
-      </div>
-      <table class="data-table" id="inv-table"></table>
-    </div>
-  </div>
-  <div class="card" id="inv-chart-card" style="display:none">
-    <div class="card-title">10-Year Projection</div>
-    <div class="chart-wrap" style="height:300px"><canvas id="projectionChart"></canvas></div>
-  </div>
-</section>
-
-<!-- ── ANOMALY DETECTION ────────────────────────────────────── -->
-<section id="anomaly" class="section">
-  <div class="page-header">
-    <h2>Anomaly Detection</h2>
-    <p>Identify suspicious listings and pricing outliers</p>
-  </div>
-  <div class="stats-grid">
-    <div class="stat-card" style="--c:var(--accent3)"><div class="stat-label">Total Listings</div><div class="stat-value">2,000</div><div class="stat-sub">Analysed</div></div>
-    <div class="stat-card" style="--c:var(--accent3)"><div class="stat-label">Anomalies Detected</div><div class="stat-value">97</div><div class="stat-sub stat-down">4.85% of all listings</div></div>
-    <div class="stat-card" style="--c:var(--accent)"><div class="stat-label">IF Outliers</div><div class="stat-value">54</div><div class="stat-sub">Isolation Forest</div></div>
-    <div class="stat-card" style="--c:var(--gold)"><div class="stat-label">Price Z-Score &gt;3</div><div class="stat-value">43</div><div class="stat-sub">Statistical outliers</div></div>
-  </div>
-  <div class="grid-2">
-    <div class="card">
-      <div class="card-title">Anomaly Score by City</div>
-      <div id="anomaly-city-bars"></div>
-    </div>
-    <div class="card">
-      <div class="card-title">Detection Method Breakdown</div>
-      <div class="chart-wrap"><canvas id="anomalyMethodChart"></canvas></div>
+    <div><h2>Data Manager</h2><p>Add, edit, or remove property listings — changes are saved to browser storage</p></div>
+    <div class="header-actions">
+      <button class="btn btn-success btn-sm" onclick="openAddModal()">➕ Add Property</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportData()">⬇️ Export JSON</button>
+      <button class="btn btn-ghost btn-sm" onclick="importData()">⬆️ Import JSON</button>
     </div>
   </div>
   <div class="card">
-    <div class="card-title">Flagged Listings (Sample)</div>
+    <div class="data-toolbar">
+      <input type="text" class="search-input" id="dm-search" placeholder="Search by title, city, locality…" oninput="renderDataTable()"/>
+      <select style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px 14px;border-radius:10px;font-size:.85rem" id="dm-filter" onchange="renderDataTable()">
+        <option value="">All Cities</option>
+      </select>
+      <span id="dm-count" style="color:var(--muted);font-size:.8rem;margin-left:auto"></span>
+    </div>
     <div style="overflow-x:auto">
-      <table class="data-table" id="anomaly-table">
-        <thead><tr><th>ID</th><th>City</th><th>Type</th><th>Price</th><th>Price/sqft</th><th>Score</th><th>Method</th><th>Status</th></tr></thead>
-        <tbody id="anomaly-tbody"></tbody>
+      <table class="tbl" id="dm-table">
+        <thead><tr><th>ID</th><th>Title</th><th>City</th><th>Type</th><th>Beds</th><th>Area</th><th>Price</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="dm-tbody"></tbody>
       </table>
     </div>
   </div>
 </section>
 
-<!-- ── MARKET HEATMAP ──────────────────────────────────────── -->
-<section id="market" class="section">
-  <div class="page-header">
-    <h2>Market Heatmap</h2>
-    <p>Average property prices across Indian cities</p>
-  </div>
-  <div class="card">
-    <div class="card-title">City Price Intensity Map</div>
-    <div class="heatmap-grid" id="heatmap-grid" style="margin-bottom:24px"></div>
-  </div>
+<!-- ═══════ PRICE PREDICTION ═══════ -->
+<section id="predict" class="section">
+  <div class="page-header"><div><h2>AI Price Prediction</h2><p>Enter property details for ML-powered valuation</p></div></div>
   <div class="grid-2">
     <div class="card">
-      <div class="card-title">Price per sqft Ranking</div>
-      <div class="chart-wrap" style="height:320px"><canvas id="rankChart"></canvas></div>
+      <div class="card-title" style="margin-bottom:18px">Property Details</div>
+      <div class="form-row" style="grid-template-columns:1fr 1fr">
+        <div class="field"><label>City</label><select id="p-city"><option>Mumbai</option><option selected>Pune</option><option>Bangalore</option><option>Hyderabad</option><option>Chennai</option><option>Delhi</option><option>Kolkata</option><option>Ahmedabad</option><option>Jaipur</option><option>Surat</option></select></div>
+        <div class="field"><label>Property Type</label><select id="p-type"><option>Apartment</option><option>Villa</option><option>Independent House</option><option>Studio</option><option>Penthouse</option></select></div>
+        <div class="field"><label>Bedrooms</label><select id="p-bed"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select></div>
+        <div class="field"><label>Bathrooms</label><select id="p-bath"><option>1</option><option selected>2</option><option>3</option><option>4</option></select></div>
+        <div class="field"><label>Area (sqft)</label><input type="number" id="p-area" value="1200"/></div>
+        <div class="field"><label>Age (years)</label><input type="number" id="p-age" value="5"/></div>
+        <div class="field"><label>Floor Number</label><input type="number" id="p-floor" value="4"/></div>
+        <div class="field"><label>Total Floors</label><input type="number" id="p-tf" value="12"/></div>
+        <div class="field"><label>Location Score (0–10)</label><input type="number" id="p-loc" value="7.5" step="0.1"/></div>
+        <div class="field"><label>No. of Amenities</label><input type="number" id="p-amen" value="5" min="0" max="10"/></div>
+      </div>
+      <button class="btn btn-primary" style="margin-top:8px" onclick="runPrediction()">🧠 Predict Price</button>
     </div>
-    <div class="card">
-      <div class="card-title">Rental Yield by City</div>
-      <div class="chart-wrap" style="height:320px"><canvas id="yieldChart"></canvas></div>
+    <div>
+      <div class="spinner" id="pred-spinner"><svg class="spin-svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg><p style="color:var(--muted);font-size:.85rem;margin-top:8px">Analysing …</p></div>
+      <div class="result-reveal" id="pred-result">
+        <div class="price-hero">
+          <div class="price-label">Estimated Market Value</div>
+          <div class="price-big" id="res-price">₹0</div>
+          <div class="price-range" id="res-range">Range: —</div>
+          <div class="price-row">
+            <div class="price-meta"><div class="v" id="res-ppsf">—</div><div class="l">₹/sqft</div></div>
+            <div class="price-meta"><div class="v" id="res-model">—</div><div class="l">Model</div></div>
+            <div class="price-meta"><div class="v">±10%</div><div class="l">Confidence</div></div>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:0">
+          <div class="card-title">Comparable Properties</div>
+          <div id="pred-comparables" class="grid-2" style="gap:10px;margin-top:12px"></div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
+<!-- ═══════ INVESTMENT ANALYSIS ═══════ -->
+<section id="investment" class="section">
+  <div class="page-header"><div><h2>Investment Analysis</h2><p>ROI projections, rental yield, mortgage calculations &amp; investment grade</p></div></div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title" style="margin-bottom:18px">Property Parameters</div>
+      <div class="form-row" style="grid-template-columns:1fr 1fr">
+        <div class="field"><label>Purchase Price (₹)</label><input type="number" id="i-price" value="8500000"/></div>
+        <div class="field"><label>City</label><select id="i-city"><option>Mumbai</option><option selected>Pune</option><option>Bangalore</option><option>Hyderabad</option><option>Chennai</option><option>Delhi</option><option>Kolkata</option><option>Ahmedabad</option><option>Jaipur</option><option>Surat</option></select></div>
+        <div class="field"><label>Annual Appreciation (%)</label><input type="number" id="i-appr" value="7" step="0.5"/></div>
+        <div class="field"><label>Rental Yield (%)</label><input type="number" id="i-yield" value="3.5" step="0.1"/></div>
+        <div class="field"><label>Loan Rate (%)</label><input type="number" id="i-rate" value="8.5" step="0.1"/></div>
+        <div class="field"><label>Loan Tenure (years)</label><input type="number" id="i-tenure" value="20"/></div>
+        <div class="field"><label>Down Payment (%)</label><input type="number" id="i-dp" value="20" min="10" max="50"/></div>
+        <div class="field"><label>Tax Rate (%)</label><input type="number" id="i-tax" value="30"/></div>
+      </div>
+      <button class="btn btn-primary" onclick="runInvestment()">📈 Analyse Investment</button>
+    </div>
+    <div>
+      <div class="result-reveal" id="inv-result">
+        <div class="card" style="margin-bottom:16px">
+          <div style="display:flex;align-items:center;gap:16px;margin-bottom:18px">
+            <div class="grade-ring" id="inv-grade-ring">A</div>
+            <div><div style="font-family:Syne,sans-serif;font-size:1.05rem;font-weight:700" id="inv-rec-text">—</div><div style="font-size:.75rem;color:var(--muted)">Investment Grade</div></div>
+          </div>
+          <table class="tbl" id="inv-table" style="font-size:.83rem"></table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="result-reveal" id="inv-chart-wrap">
+    <div class="card"><div class="card-title">10-Year Value Projection</div><div class="chart-wrap tall"><canvas id="projChart"></canvas></div></div>
+  </div>
+</section>
+
+<!-- ═══════ ANOMALY DETECTION ═══════ -->
+<section id="anomaly" class="section">
+  <div class="page-header"><div><h2>Anomaly Detection</h2><p>Suspicious listings &amp; pricing outliers identified by ML</p></div></div>
+  <div class="stats-grid">
+    <div class="stat-card" style="--c:var(--accent3)"><div class="stat-label">Total Listings</div><div class="stat-value">2,000</div><div class="stat-sub">Synthetic dataset</div></div>
+    <div class="stat-card" style="--c:var(--accent3)"><div class="stat-label">Anomalies Found</div><div class="stat-value">97</div><div class="stat-sub down">4.85% flagged</div></div>
+    <div class="stat-card" style="--c:var(--accent)"><div class="stat-label">Isolation Forest</div><div class="stat-value">54</div><div class="stat-sub">Model-based outliers</div></div>
+    <div class="stat-card" style="--c:var(--gold)"><div class="stat-label">Z-Score &gt; 3σ</div><div class="stat-value">43</div><div class="stat-sub">Statistical outliers</div></div>
+  </div>
+  <div class="grid-2">
+    <div class="card"><div class="card-header"><div class="card-title">Anomaly Rate by City</div></div><div id="anom-bars"></div></div>
+    <div class="card"><div class="card-header"><div class="card-title">Detection Method Split</div></div><div class="chart-wrap"><canvas id="anomMethodChart"></canvas></div></div>
+  </div>
+  <div class="card">
+    <div class="card-header"><div class="card-title">Flagged Listings — Sample</div></div>
+    <div style="overflow-x:auto">
+      <table class="tbl"><thead><tr><th>ID</th><th>City</th><th>Type</th><th>Price</th><th>₹/sqft</th><th>IF Score</th><th>Method</th><th>Risk</th></tr></thead>
+      <tbody id="anom-tbody"></tbody></table>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ MARKET HEATMAP ═══════ -->
+<section id="market" class="section">
+  <div class="page-header"><div><h2>Market Heatmap</h2><p>City-level price intensity &amp; investment metrics</p></div></div>
+  <div class="card"><div class="card-title" style="margin-bottom:18px">City Price Intensity</div><div class="heat-grid" id="heatmap-cells"></div></div>
+  <div class="grid-2">
+    <div class="card"><div class="card-title">Price per sqft Ranking</div><div class="chart-wrap tall"><canvas id="rankChart"></canvas></div></div>
+    <div class="card"><div class="card-title">Rental Yield by City</div><div class="chart-wrap tall"><canvas id="yieldChart"></canvas></div></div>
+  </div>
+</section>
+
+<!-- ═══════ BANKING SCHEMES ═══════ -->
+<section id="banking" class="section">
+  <div class="page-header"><div><h2>Banking &amp; Loan Schemes</h2><p>Compare home loan options from top Indian banks &amp; government schemes</p></div></div>
+  <div class="card" style="margin-bottom:22px">
+    <div class="card-title" style="margin-bottom:14px">Quick Filter</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm active-filter" onclick="filterBanks('all',this)">All Schemes</button>
+      <button class="btn btn-ghost btn-sm" onclick="filterBanks('govt',this)">Govt Schemes</button>
+      <button class="btn btn-ghost btn-sm" onclick="filterBanks('low',this)">Lowest Rate</button>
+      <button class="btn btn-ghost btn-sm" onclick="filterBanks('high',this)">High LTV</button>
+    </div>
+  </div>
+  <div id="bank-grid" class="grid-2"></div>
+</section>
+
+<!-- ═══════ EMI CALCULATOR ═══════ -->
+<section id="emi" class="section">
+  <div class="page-header"><div><h2>EMI Calculator</h2><p>Calculate monthly payments, total interest &amp; amortisation schedule</p></div></div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title" style="margin-bottom:18px">Loan Details</div>
+      <div class="form-row" style="grid-template-columns:1fr">
+        <div class="field"><label>Property Value (₹)</label><input type="number" id="ec-price" value="8500000" oninput="calcEMI()"/></div>
+        <div class="field"><label>Down Payment (%)</label><input type="range" id="ec-dp" min="10" max="50" value="20" oninput="calcEMI();this.nextElementSibling.textContent=this.value+'%'"/><span style="color:var(--accent2);font-weight:600">20%</span></div>
+        <div class="field"><label>Interest Rate (% p.a.)</label><input type="range" id="ec-rate" min="7" max="14" step="0.1" value="8.5" oninput="calcEMI();this.nextElementSibling.textContent=parseFloat(this.value).toFixed(1)+'%'"/><span style="color:var(--accent2);font-weight:600">8.5%</span></div>
+        <div class="field"><label>Tenure (years)</label><input type="range" id="ec-tenure" min="5" max="30" value="20" oninput="calcEMI();this.nextElementSibling.textContent=this.value+' yrs'"/><span style="color:var(--accent2);font-weight:600">20 yrs</span></div>
+      </div>
+      <div class="emi-result" id="emi-result">
+        <div style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Monthly EMI</div>
+        <div class="emi-amount" id="emi-amount">₹0</div>
+        <div class="emi-breakdown">
+          <div class="emi-break-item"><div class="emi-break-val" id="emi-principal">₹0</div><div class="emi-break-lbl">Loan Amount</div></div>
+          <div class="emi-break-item"><div class="emi-break-val" id="emi-interest">₹0</div><div class="emi-break-lbl">Total Interest</div></div>
+          <div class="emi-break-item"><div class="emi-break-val" id="emi-total">₹0</div><div class="emi-break-lbl">Total Payable</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card"><div class="card-title">Payment Breakdown</div><div class="chart-wrap"><canvas id="emiDonut"></canvas></div>
+      <div class="card" style="margin-top:16px;padding:16px">
+        <div class="card-title" style="font-size:.85rem;margin-bottom:10px">Best Matching Bank Schemes</div>
+        <div id="emi-banks" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+    </div>
+  </div>
+  <div class="card"><div class="card-title">Amortisation Schedule (First 5 Years)</div>
+    <div style="overflow-x:auto"><table class="tbl" id="amort-table"><thead><tr><th>Year</th><th>Opening Balance</th><th>Total Paid</th><th>Principal Paid</th><th>Interest Paid</th><th>Closing Balance</th></tr></thead><tbody id="amort-body"></tbody></table></div>
+  </div>
+</section>
+
+</div><!-- page-wrap -->
 </main>
 
-<script>
-/* ══════════════════════════════════════════════════════════════
-   DATA & CONFIG
-══════════════════════════════════════════════════════════════ */
-const CITIES = ["Mumbai","Delhi","Bangalore","Hyderabad","Chennai","Pune","Kolkata","Ahmedabad","Jaipur","Surat"];
-const AVG_PPSF  = [25000,18000,12000,8500,9500,9000,7000,6500,6000,5500];
-const AVG_PRICE = [112,85,68,54,58,62,41,38,34,30]; // lakhs
-const YIELDS    = [2.8,3.0,3.8,4.1,3.6,3.4,4.3,4.6,4.8,5.0]; // %
+<!-- ══════════════════════ PROPERTY DETAIL MODAL ══════════════════════ -->
+<div class="modal-overlay" id="prop-modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modal-title">Property Details</div>
+        <div style="font-size:.78rem;color:var(--muted);margin-top:2px" id="modal-subtitle"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
 
-const CHART_DEFAULTS = {
-  color: "#e8e8f0",
-  gridColor: "rgba(255,255,255,.06)",
-  font: { family: "DM Sans" }
+<!-- ══════════════════════ ADD/EDIT PROPERTY MODAL ══════════════════════ -->
+<div class="modal-overlay" id="edit-modal" onclick="if(event.target===this)closeEditModal()">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-header">
+      <div class="modal-title" id="edit-modal-title">Add Property</div>
+      <button class="modal-close" onclick="closeEditModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="field"><label>Title</label><input type="text" id="ef-title" placeholder="e.g. 3BHK Apartment in Baner"/></div>
+        <div class="field"><label>City</label><select id="ef-city"><option>Mumbai</option><option selected>Pune</option><option>Bangalore</option><option>Hyderabad</option><option>Chennai</option><option>Delhi</option><option>Kolkata</option><option>Ahmedabad</option><option>Jaipur</option><option>Surat</option></select></div>
+        <div class="field"><label>Locality</label><input type="text" id="ef-locality" placeholder="e.g. Koregaon Park"/></div>
+        <div class="field"><label>Property Type</label><select id="ef-type"><option>Apartment</option><option>Villa</option><option>Independent House</option><option>Studio</option><option>Penthouse</option></select></div>
+        <div class="field"><label>Bedrooms</label><input type="number" id="ef-bed" value="3" min="1" max="10"/></div>
+        <div class="field"><label>Bathrooms</label><input type="number" id="ef-bath" value="2" min="1" max="10"/></div>
+        <div class="field"><label>Area (sqft)</label><input type="number" id="ef-area" value="1200"/></div>
+        <div class="field"><label>Price (₹)</label><input type="number" id="ef-price" value="8500000"/></div>
+        <div class="field"><label>Age (years)</label><input type="number" id="ef-age" value="3" min="0"/></div>
+        <div class="field"><label>Floor Number</label><input type="number" id="ef-floor" value="5" min="0"/></div>
+        <div class="field"><label>Total Floors</label><input type="number" id="ef-tf" value="14" min="1"/></div>
+        <div class="field"><label>Location Score (0-10)</label><input type="number" id="ef-loc" value="7.5" step="0.1" min="0" max="10"/></div>
+        <div class="field"><label>Builder</label><input type="text" id="ef-builder" placeholder="Builder name"/></div>
+        <div class="field"><label>RERA ID</label><input type="text" id="ef-rera" placeholder="RERA registration"/></div>
+        <div class="field"><label>Status</label><select id="ef-status"><option value="available">Available</option><option value="sold">Sold</option><option value="upcoming">Upcoming</option></select></div>
+      </div>
+      <div class="field" style="margin-bottom:14px"><label>Description</label><textarea id="ef-desc" rows="3" placeholder="Property description…"></textarea></div>
+      <div class="field" style="margin-bottom:14px"><label>Amenities (comma separated)</label><input type="text" id="ef-amenities" placeholder="Gym, Pool, Parking, Security…"/></div>
+      <div class="field" style="margin-bottom:20px"><label>Image URL (optional)</label><input type="text" id="ef-img" placeholder="https://…"/></div>
+      <input type="hidden" id="ef-id"/>
+      <div style="display:flex;gap:12px">
+        <button class="btn btn-primary" onclick="saveProperty()">💾 Save Property</button>
+        <button class="btn btn-ghost" onclick="closeEditModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- IMPORT FILE INPUT -->
+<input type="file" id="import-input" accept=".json" style="display:none" onchange="handleImport(event)"/>
+
+<script>
+/* ════════════════════════════════════════════════════════
+   DATA STORE
+════════════════════════════════════════════════════════ */
+let PROPERTIES = [];
+let BANKS      = [];
+
+const CITIES_DATA = {
+  Mumbai:    {avg_price:112,ppsf:25000,yield:2.8},
+  Delhi:     {avg_price:85, ppsf:18000,yield:3.0},
+  Bangalore: {avg_price:68, ppsf:12000,yield:3.8},
+  Hyderabad: {avg_price:54, ppsf:8500, yield:4.1},
+  Chennai:   {avg_price:58, ppsf:9500, yield:3.6},
+  Pune:      {avg_price:62, ppsf:9000, yield:3.4},
+  Kolkata:   {avg_price:41, ppsf:7000, yield:4.3},
+  Ahmedabad: {avg_price:38, ppsf:6500, yield:4.6},
+  Jaipur:    {avg_price:34, ppsf:6000, yield:4.8},
+  Surat:     {avg_price:30, ppsf:5500, yield:5.0}
 };
-Chart.defaults.color = CHART_DEFAULTS.color;
-Chart.defaults.borderColor = CHART_DEFAULTS.gridColor;
+
+Chart.defaults.color = "#7070a0";
+Chart.defaults.borderColor = "rgba(255,255,255,.06)";
 Chart.defaults.font.family = "DM Sans";
 
-const palette = ["#6c47ff","#00d4a8","#ff6b6b","#f5c842","#a78bfa","#34d399","#fb923c","#38bdf8","#f472b6","#84cc16"];
+/* ════════════════════════════════════════════════════════
+   BOOTSTRAP — load JSON data
+════════════════════════════════════════════════════════ */
+async function loadData() {
+  // Try localStorage first (user edits)
+  const stored = localStorage.getItem("props_v2");
+  if (stored) {
+    PROPERTIES = JSON.parse(stored);
+  } else {
+    try {
+      const r = await fetch("data/properties.json");
+      PROPERTIES = await r.json();
+      localStorage.setItem("props_v2", JSON.stringify(PROPERTIES));
+    } catch(e) {
+      PROPERTIES = getFallbackProperties();
+      localStorage.setItem("props_v2", JSON.stringify(PROPERTIES));
+    }
+  }
 
-/* ══════════════════════════════════════════════════════════════
+  try {
+    const r = await fetch("data/banking_schemes.json");
+    BANKS = await r.json();
+  } catch(e) {
+    BANKS = getFallbackBanks();
+  }
+
+  // Populate city filters
+  const cities = [...new Set(PROPERTIES.map(p=>p.city))].sort();
+  ["filter-city","dm-filter"].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    cities.forEach(c => {
+      const o = document.createElement("option"); o.value=c; o.textContent=c; el.appendChild(o);
+    });
+  });
+
+  document.getElementById("listing-count").textContent = PROPERTIES.length;
+  document.getElementById("dash-active").textContent = PROPERTIES.filter(p=>p.status==="available").length;
+
+  renderListings(PROPERTIES);
+  renderDataTable();
+  renderBanks(BANKS);
+  initDashboard();
+  initMarket();
+  initAnomaly();
+  calcEMI();
+  updateEMIBanks();
+}
+
+/* ════════════════════════════════════════════════════════
    NAVIGATION
-══════════════════════════════════════════════════════════════ */
-function showSection(id) {
-  document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
-  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+════════════════════════════════════════════════════════ */
+function showSection(id, btn) {
+  document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+  document.querySelectorAll(".nav-item").forEach(n=>n.classList.remove("active"));
   document.getElementById(id).classList.add("active");
-  event.currentTarget.classList.add("active");
-  // Lazy-init charts
-  if (id === "dashboard") initDashboardCharts();
-  if (id === "market")    initMarket();
-  if (id === "anomaly")   initAnomalySection();
+  if (btn) btn.classList.add("active");
 }
 
-/* ══════════════════════════════════════════════════════════════
-   DASHBOARD CHARTS
-══════════════════════════════════════════════════════════════ */
-let dashInit = false;
-function initDashboardCharts() {
-  if (dashInit) return; dashInit = true;
-
-  // City price bar chart
-  new Chart(document.getElementById("cityPriceChart"), {
-    type: "bar",
-    data: {
-      labels: CITIES,
-      datasets: [{
-        label: "Avg Price (₹ Lakhs)",
-        data: AVG_PRICE,
-        backgroundColor: palette,
-        borderRadius: 6,
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        y: { grid: { color: CHART_DEFAULTS.gridColor }, beginAtZero: true },
-        x: { grid: { display: false } }
-      }
-    }
-  });
-
-  // Type donut
-  new Chart(document.getElementById("typeDonut"), {
-    type: "doughnut",
-    data: {
-      labels: ["Apartment","Villa","Ind. House","Studio","Penthouse"],
-      datasets: [{ data: [42,22,18,12,6], backgroundColor: palette, borderWidth: 0 }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { position: "right", labels: { padding: 16, usePointStyle: true } },
-        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed}%` } }
-      },
-      cutout: "65%"
-    }
-  });
-
-  // Model comparison
-  new Chart(document.getElementById("modelChart"), {
-    type: "bar",
-    data: {
-      labels: ["Linear Reg.", "Ridge Reg.", "Random Forest", "XGBoost / GBM", "Neural Net"],
-      datasets: [
-        { label: "R² Score", data: [0.72, 0.73, 0.91, 0.93, 0.89], backgroundColor: "#6c47ff", borderRadius: 5 },
-        { label: "MAPE (%)", data: [18.2, 17.8, 9.4, 8.1, 10.3], backgroundColor: "#00d4a8", borderRadius: 5 }
-      ]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { position: "top" } },
-      scales: {
-        y: { grid: { color: CHART_DEFAULTS.gridColor }, beginAtZero: true },
-        x: { grid: { display: false } }
-      }
-    }
-  });
-
-  // Trend line chart
-  const years = ["2019","2020","2021","2022","2023","2024","2025"];
-  new Chart(document.getElementById("trendChart"), {
-    type: "line",
-    data: {
-      labels: years,
-      datasets: [
-        { label: "Mumbai", data: [85,84,88,96,104,110,112], borderColor:"#6c47ff", tension:.4, fill:false, pointRadius:3 },
-        { label: "Bangalore", data: [45,46,50,58,62,66,68], borderColor:"#00d4a8", tension:.4, fill:false, pointRadius:3 },
-        { label: "Hyderabad", data: [36,37,40,47,51,53,54], borderColor:"#f5c842", tension:.4, fill:false, pointRadius:3 },
-        { label: "Pune", data: [40,40,43,52,58,60,62], borderColor:"#ff6b6b", tension:.4, fill:false, pointRadius:3 },
-      ]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { position: "top" } },
-      scales: {
-        y: { grid: { color: CHART_DEFAULTS.gridColor }, title: { display:true, text:"₹ Lakhs" } },
-        x: { grid: { display: false } }
-      }
-    }
-  });
+/* ════════════════════════════════════════════════════════
+   FORMAT HELPERS
+════════════════════════════════════════════════════════ */
+function fmtINR(n) {
+  n = Math.round(+n);
+  if (n>=10000000) return `₹${(n/10000000).toFixed(2)} Cr`;
+  if (n>=100000)   return `₹${(n/100000).toFixed(2)} L`;
+  return `₹${n.toLocaleString("en-IN")}`;
 }
-// Auto-init dashboard on load
-window.addEventListener("load", initDashboardCharts);
-
-/* ══════════════════════════════════════════════════════════════
-   PRICE PREDICTION (simulated — replace with real API call)
-══════════════════════════════════════════════════════════════ */
-const CITY_BASE_PPSF = {
-  Mumbai:25000,Delhi:18000,Bangalore:12000,Pune:9000,Hyderabad:8500,
-  Chennai:9500,Kolkata:7000,Ahmedabad:6500,Jaipur:6000,Surat:5500
-};
-const TYPE_FACTOR = { Apartment:1.0,Villa:1.5,"Independent House":1.2,Studio:0.85,Penthouse:1.8 };
-
-function simulatePredict(params) {
-  const base   = CITY_BASE_PPSF[params.city] || 9000;
-  const tf     = TYPE_FACTOR[params.propType] || 1.0;
-  const ageD   = Math.max(0, 1 - params.age * 0.01);
-  const amenB  = 1 + params.amenCount * 0.025;
-  const locB   = 1 + (params.locScore - 5) * 0.05;
-  const noise  = 0.95 + Math.random() * 0.10;
-  const ppsf   = Math.round(base * tf * ageD * amenB * locB * noise);
-  return { price: ppsf * params.area, ppsf, model: "Random Forest" };
+function fmtINRShort(n) {
+  n = Math.round(+n);
+  if (n>=10000000) return `₹${(n/10000000).toFixed(1)}Cr`;
+  if (n>=100000)   return `₹${(n/100000).toFixed(1)}L`;
+  return `₹${n.toLocaleString("en-IN")}`;
 }
+
+/* ════════════════════════════════════════════════════════
+   PROPERTY CARD RENDERER
+════════════════════════════════════════════════════════ */
+function propCardHTML(p) {
+  const amenArr = Array.isArray(p.amenities) ? p.amenities : (p.amenities||"").split(",");
+  const img = p.images && p.images[0]
+    ? `<img class="prop-img" src="${p.images[0]}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" loading="lazy"/>
+       <div class="prop-img-placeholder" style="display:none">🏠</div>`
+    : `<div class="prop-img-placeholder">🏠</div>`;
+
+  const statusClass = p.status==="available"?"badge-green":p.status==="sold"?"badge-red":"badge-blue";
+  const yieldPct = p.investment?.rental_yield||0;
+
+  return `<div class="prop-card" onclick='openPropertyModal(${JSON.stringify(p).replace(/'/g,"&#39;")})'>
+    ${img}
+    <div class="prop-body">
+      <div class="prop-status">
+        <span class="badge ${statusClass}">${p.status||"available"}</span>
+        <span style="font-size:.72rem;color:var(--muted)">${p.bedrooms}BHK · ${p.area_sqft?.toLocaleString("en-IN")} sqft</span>
+      </div>
+      <div class="prop-title">${p.title}</div>
+      <div class="prop-location">📍 ${p.locality}, ${p.city}</div>
+      <div class="prop-price">${fmtINRShort(p.price)}</div>
+      <div class="prop-meta">
+        <span class="prop-meta-item">🛏 ${p.bedrooms} Bed</span>
+        <span class="prop-meta-item">🚿 ${p.bathrooms} Bath</span>
+        <span class="prop-meta-item">📐 ${(p.price/p.area_sqft).toFixed(0)}/sqft</span>
+        <span class="prop-meta-item">⭐ ${p.location_score}</span>
+      </div>
+      <div class="prop-yield">
+        <span class="prop-yield-label">Rental Yield</span>
+        <span class="prop-yield-value">${yieldPct}% p.a.</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderListings(props) {
+  document.getElementById("listings-grid").innerHTML = props.map(propCardHTML).join("") || `<p style="color:var(--muted);grid-column:1/-1">No properties found.</p>`;
+}
+
+function filterListings() {
+  const city = document.getElementById("filter-city").value;
+  const type = document.getElementById("filter-type").value;
+  let filtered = PROPERTIES;
+  if (city) filtered = filtered.filter(p=>p.city===city);
+  if (type) filtered = filtered.filter(p=>p.property_type===type);
+  renderListings(filtered);
+}
+
+/* ════════════════════════════════════════════════════════
+   PROPERTY DETAIL MODAL
+════════════════════════════════════════════════════════ */
+function openPropertyModal(p) {
+  document.getElementById("modal-title").textContent = p.title;
+  document.getElementById("modal-subtitle").textContent = `${p.locality}, ${p.city} · ${p.builder||""}`;
+
+  const amenArr = Array.isArray(p.amenities) ? p.amenities : (p.amenities||"").split(",").map(a=>a.trim());
+  const inv = p.investment || {};
+
+  // Images
+  let imgHtml = "";
+  if (p.images && p.images.length >= 2) {
+    imgHtml = `<div class="modal-img-strip">
+      <img class="modal-img" src="${p.images[0]}" onerror="this.src=''" loading="lazy"/>
+      <img class="modal-img" src="${p.images[1]}" onerror="this.src=''" loading="lazy"/>
+    </div>`;
+  } else if (p.images && p.images.length === 1) {
+    imgHtml = `<img class="modal-img-single" src="${p.images[0]}" onerror="this.style.display='none'" loading="lazy"/>`;
+  }
+
+  // Banking cards for this price
+  const topBanks = [...BANKS].sort((a,b)=>a.interest_rate_min-b.interest_rate_min).slice(0,4);
+  const bankHtml = topBanks.map(b=>miniBank(b, p.price)).join("");
+
+  document.getElementById("modal-body").innerHTML = `
+    ${imgHtml}
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;flex-wrap:wrap;gap:12px">
+      <div>
+        <div style="font-family:Syne,sans-serif;font-size:1.8rem;font-weight:800;background:linear-gradient(135deg,var(--accent2),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent">${fmtINR(p.price)}</div>
+        <div style="font-size:.8rem;color:var(--muted);margin-top:2px">₹${Math.round(p.price/p.area_sqft).toLocaleString("en-IN")}/sqft · RERA: ${p.rera_id||"N/A"}</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span class="badge ${p.status==="available"?"badge-green":"badge-red"}">${p.status}</span>
+        <span class="badge badge-blue">${p.possession||"Ready"}</span>
+        ${p.investment?.appreciation_5yr ? `<span class="badge badge-gold">+${p.investment.appreciation_5yr}% in 5yr</span>` : ""}
+      </div>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-section-title">Specifications</div>
+      <div class="modal-specs">
+        <div class="modal-spec"><div class="modal-spec-val">${p.bedrooms}</div><div class="modal-spec-lbl">Bedrooms</div></div>
+        <div class="modal-spec"><div class="modal-spec-val">${p.bathrooms}</div><div class="modal-spec-lbl">Bathrooms</div></div>
+        <div class="modal-spec"><div class="modal-spec-val">${p.area_sqft?.toLocaleString("en-IN")}</div><div class="modal-spec-lbl">Area (sqft)</div></div>
+        <div class="modal-spec"><div class="modal-spec-val">${p.age_years ?? 0} yr</div><div class="modal-spec-lbl">Age</div></div>
+        <div class="modal-spec"><div class="modal-spec-val">${p.floor_number ?? 0} / ${p.total_floors}</div><div class="modal-spec-lbl">Floor</div></div>
+        <div class="modal-spec"><div class="modal-spec-val">${p.location_score}/10</div><div class="modal-spec-lbl">Location Score</div></div>
+        <div class="modal-spec"><div class="modal-spec-val">${p.city}</div><div class="modal-spec-lbl">City</div></div>
+        <div class="modal-spec"><div class="modal-spec-val">${p.property_type}</div><div class="modal-spec-lbl">Type</div></div>
+      </div>
+    </div>
+
+    ${p.description ? `<div class="modal-section"><div class="modal-section-title">About</div><p style="font-size:.875rem;color:var(--muted);line-height:1.7">${p.description}</p></div>` : ""}
+
+    <div class="modal-section">
+      <div class="modal-section-title">Amenities</div>
+      <div style="display:flex;flex-wrap:wrap;gap:7px">${amenArr.map(a=>`<span class="badge badge-blue">✓ ${a}</span>`).join("")}</div>
+    </div>
+
+    ${p.nearby ? `<div class="modal-section">
+      <div class="modal-section-title">Nearby</div>
+      <div class="modal-nearby">
+        ${Object.entries(p.nearby).map(([k,v])=>`<div class="nearby-item"><div class="nearby-label">${k.charAt(0).toUpperCase()+k.slice(1)}</div>${v}</div>`).join("")}
+      </div>
+    </div>` : ""}
+
+    <div class="modal-section">
+      <div class="modal-section-title">Investment Snapshot</div>
+      <div class="modal-invest-grid">
+        <div class="invest-box"><div class="invest-val" style="color:var(--accent2)">${inv.rental_yield||"—"}%</div><div class="invest-lbl">Rental Yield p.a.</div></div>
+        <div class="invest-box"><div class="invest-val" style="color:var(--gold)">${inv.appreciation_5yr||"—"}%</div><div class="invest-lbl">Appreciation (5yr)</div></div>
+        <div class="invest-box"><div class="invest-val">${inv.monthly_rent ? fmtINRShort(inv.monthly_rent) : "—"}</div><div class="invest-lbl">Est. Monthly Rent</div></div>
+      </div>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-section-title">🏦 Recommended Banking Schemes</div>
+      <div class="modal-bank-cards">${bankHtml}</div>
+      <button class="btn btn-outline btn-sm" style="margin-top:14px" onclick="closeModal();showSection('banking',document.querySelector('.nav-item:nth-child(13)'))">View All Schemes →</button>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:20px;padding-top:18px;border-top:1px solid var(--border)">
+      <button class="btn btn-primary" onclick="closeModal();prefillInvestment(${p.price},'${p.city}');showSection('investment',document.querySelectorAll('.nav-item')[7])">📈 Full Investment Analysis</button>
+      <button class="btn btn-ghost" onclick="closeModal();prefillEMI(${p.price});showSection('emi',document.querySelectorAll('.nav-item')[8])">🧮 Calculate EMI</button>
+    </div>`;
+
+  document.getElementById("prop-modal").classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+
+function miniBank(b, propPrice) {
+  const loan = propPrice * 0.8;
+  const mr = b.interest_rate_min/100/12;
+  const n = 240;
+  const emi = loan * mr * Math.pow(1+mr,n) / (Math.pow(1+mr,n)-1);
+  return `<div style="background:var(--surface3);border-radius:10px;padding:12px;border:1px solid var(--border)">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <div class="bank-logo" style="background:${b.logo_color};width:30px;height:30px;font-size:.6rem">${b.short}</div>
+      <div><div style="font-size:.82rem;font-weight:700">${b.bank}</div>${b.government_scheme?`<span class="bank-govt-badge">Govt</span>`:""}</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div><div style="font-size:1rem;font-weight:800;color:var(--accent2)">${b.interest_rate_min}%</div><div style="font-size:.65rem;color:var(--muted)">from p.a.</div></div>
+      <div style="text-align:right"><div style="font-size:.85rem;font-weight:700">${fmtINRShort(Math.round(emi))}/mo</div><div style="font-size:.65rem;color:var(--muted)">20yr EMI est.</div></div>
+    </div>
+  </div>`;
+}
+
+function closeModal() {
+  document.getElementById("prop-modal").classList.remove("open");
+  document.body.style.overflow = "";
+}
+
+/* ════════════════════════════════════════════════════════
+   RECOMMENDATIONS
+════════════════════════════════════════════════════════ */
+function runRecommendation() {
+  const city     = document.getElementById("r-city").value;
+  const type     = document.getElementById("r-type").value;
+  const bed      = document.getElementById("r-bed").value;
+  const budget   = +document.getElementById("r-budget").value;
+  const area     = +document.getElementById("r-area").value;
+  const locScore = +document.getElementById("r-locscore").value;
+  const sortBy   = document.getElementById("r-sort").value;
+  const status   = document.getElementById("r-status").value;
+  const amenity  = document.getElementById("r-amenity").value;
+
+  let results = [...PROPERTIES];
+
+  if (city && city !== "All Cities") results = results.filter(p=>p.city===city);
+  if (type) results = results.filter(p=>p.property_type===type);
+  if (bed)  results = results.filter(p=>p.bedrooms===+bed);
+  if (budget>0) results = results.filter(p=>p.price<=budget);
+  if (area>0)   results = results.filter(p=>p.area_sqft>=area);
+  if (locScore) results = results.filter(p=>p.location_score>=locScore);
+  if (status)   results = results.filter(p=>p.status===status);
+  if (amenity)  results = results.filter(p=>{
+    const arr = Array.isArray(p.amenities)?p.amenities:(p.amenities||"").split(",").map(a=>a.trim());
+    return arr.some(a=>a.toLowerCase().includes(amenity.toLowerCase()));
+  });
+
+  // Score each result
+  results = results.map(p => {
+    const locN    = p.location_score / 10;
+    const yieldN  = (p.investment?.rental_yield||3) / 6;
+    const budgetN = budget>0 ? 1-(p.price/budget) : 0.5;
+    const ageN    = 1 - (p.age_years||0)/30;
+    const sim     = +(locN*0.35 + yieldN*0.25 + budgetN*0.2 + ageN*0.2).toFixed(3);
+    return {...p, _sim: sim};
+  });
+
+  // Sort
+  if (sortBy==="sim")       results.sort((a,b)=>b._sim-a._sim);
+  else if (sortBy==="price_asc")  results.sort((a,b)=>a.price-b.price);
+  else if (sortBy==="price_desc") results.sort((a,b)=>b.price-a.price);
+  else if (sortBy==="yield")      results.sort((a,b)=>(b.investment?.rental_yield||0)-(a.investment?.rental_yield||0));
+  else if (sortBy==="loc")        results.sort((a,b)=>b.location_score-a.location_score);
+
+  const countEl = document.getElementById("rec-count");
+  countEl.style.display = "block";
+  countEl.textContent = `Found ${results.length} matching ${results.length===1?"property":"properties"}`;
+
+  document.getElementById("rec-results").innerHTML = results.length
+    ? results.map(p => {
+        const simPct = Math.round(p._sim*100);
+        return `<div class="prop-card" onclick='openPropertyModal(${JSON.stringify(p).replace(/'/g,"&#39;")})'>
+          ${p.images&&p.images[0]
+            ?`<img class="prop-img" src="${p.images[0]}" onerror="this.style.display='none'" loading="lazy"/>`
+            :`<div class="prop-img-placeholder">🏠</div>`}
+          <div class="prop-body">
+            <div class="prop-status"><span class="badge badge-green">● ${simPct}% match</span><span style="font-size:.72rem;color:var(--muted)">${p.property_type}</span></div>
+            <div class="prop-title">${p.title}</div>
+            <div class="prop-location">📍 ${p.locality}, ${p.city}</div>
+            <div class="prop-price">${fmtINRShort(p.price)}</div>
+            <div class="prop-meta">
+              <span class="prop-meta-item">🛏 ${p.bedrooms}BHK</span>
+              <span class="prop-meta-item">📐 ${p.area_sqft?.toLocaleString()}sqft</span>
+              <span class="prop-meta-item">⭐ ${p.location_score}</span>
+            </div>
+            <div class="prop-yield"><span class="prop-yield-label">Rental Yield</span><span class="prop-yield-value">${p.investment?.rental_yield||"—"}%</span></div>
+          </div>
+        </div>`;
+      }).join("")
+    : `<p style="color:var(--muted);grid-column:1/-1;text-align:center;padding:40px">No properties match your criteria. Try relaxing the filters.</p>`;
+}
+
+function clearRec() {
+  document.getElementById("rec-results").innerHTML = "";
+  document.getElementById("rec-count").style.display = "none";
+}
+
+/* ════════════════════════════════════════════════════════
+   DATA MANAGER
+════════════════════════════════════════════════════════ */
+function renderDataTable() {
+  const q    = document.getElementById("dm-search").value.toLowerCase();
+  const city = document.getElementById("dm-filter").value;
+  let filtered = PROPERTIES.filter(p => {
+    const match = !q || p.title.toLowerCase().includes(q) || p.city.toLowerCase().includes(q) || (p.locality||"").toLowerCase().includes(q);
+    const cityOk = !city || p.city===city;
+    return match && cityOk;
+  });
+  document.getElementById("dm-count").textContent = `${filtered.length} / ${PROPERTIES.length} properties`;
+  document.getElementById("dm-tbody").innerHTML = filtered.map(p=>`<tr>
+    <td><code style="color:var(--accent);font-size:.75rem">${p.id}</code></td>
+    <td style="font-weight:600">${p.title}</td>
+    <td>${p.city}</td>
+    <td>${p.property_type}</td>
+    <td style="text-align:center">${p.bedrooms}</td>
+    <td>${p.area_sqft?.toLocaleString()} sqft</td>
+    <td style="font-weight:600;color:var(--accent2)">${fmtINRShort(p.price)}</td>
+    <td><span class="badge ${p.status==="available"?"badge-green":"badge-red"}">${p.status}</span></td>
+    <td style="white-space:nowrap">
+      <button class="btn btn-ghost btn-sm" onclick="editProperty('${p.id}');event.stopPropagation()">✏️</button>
+      <button class="btn btn-danger btn-sm" style="margin-left:4px" onclick="deleteProperty('${p.id}');event.stopPropagation()">🗑</button>
+    </td>
+  </tr>`).join("");
+}
+
+function saveToStorage() {
+  localStorage.setItem("props_v2", JSON.stringify(PROPERTIES));
+  document.getElementById("listing-count").textContent = PROPERTIES.length;
+  document.getElementById("dash-active").textContent = PROPERTIES.filter(p=>p.status==="available").length;
+}
+
+function openAddModal() {
+  document.getElementById("edit-modal-title").textContent = "Add New Property";
+  document.getElementById("ef-id").value = "";
+  ["ef-title","ef-locality","ef-builder","ef-rera","ef-desc","ef-amenities","ef-img"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("ef-bed").value=3; document.getElementById("ef-bath").value=2;
+  document.getElementById("ef-area").value=1200; document.getElementById("ef-price").value=8500000;
+  document.getElementById("ef-age").value=3; document.getElementById("ef-floor").value=5;
+  document.getElementById("ef-tf").value=14; document.getElementById("ef-loc").value=7.5;
+  document.getElementById("edit-modal").classList.add("open");
+  document.body.style.overflow="hidden";
+}
+
+function editProperty(id) {
+  const p = PROPERTIES.find(x=>x.id===id);
+  if (!p) return;
+  document.getElementById("edit-modal-title").textContent = "Edit Property";
+  document.getElementById("ef-id").value     = p.id;
+  document.getElementById("ef-title").value  = p.title||"";
+  document.getElementById("ef-city").value   = p.city||"Pune";
+  document.getElementById("ef-locality").value = p.locality||"";
+  document.getElementById("ef-type").value   = p.property_type||"Apartment";
+  document.getElementById("ef-bed").value    = p.bedrooms||3;
+  document.getElementById("ef-bath").value   = p.bathrooms||2;
+  document.getElementById("ef-area").value   = p.area_sqft||1200;
+  document.getElementById("ef-price").value  = p.price||8500000;
+  document.getElementById("ef-age").value    = p.age_years||0;
+  document.getElementById("ef-floor").value  = p.floor_number||0;
+  document.getElementById("ef-tf").value     = p.total_floors||10;
+  document.getElementById("ef-loc").value    = p.location_score||7;
+  document.getElementById("ef-builder").value= p.builder||"";
+  document.getElementById("ef-rera").value   = p.rera_id||"";
+  document.getElementById("ef-status").value = p.status||"available";
+  document.getElementById("ef-desc").value   = p.description||"";
+  const amenArr = Array.isArray(p.amenities)?p.amenities:(p.amenities||"").split(",");
+  document.getElementById("ef-amenities").value = amenArr.join(", ");
+  document.getElementById("ef-img").value    = (p.images&&p.images[0])||"";
+  document.getElementById("edit-modal").classList.add("open");
+  document.body.style.overflow="hidden";
+}
+
+function saveProperty() {
+  const id = document.getElementById("ef-id").value;
+  const price = +document.getElementById("ef-price").value;
+  const area  = +document.getElementById("ef-area").value;
+  const amenRaw = document.getElementById("ef-amenities").value;
+  const amenArr = amenRaw.split(",").map(a=>a.trim()).filter(Boolean);
+  const imgUrl  = document.getElementById("ef-img").value.trim();
+
+  const obj = {
+    id:            id || "PROP" + String(Date.now()).slice(-6),
+    title:         document.getElementById("ef-title").value,
+    city:          document.getElementById("ef-city").value,
+    locality:      document.getElementById("ef-locality").value,
+    property_type: document.getElementById("ef-type").value,
+    bedrooms:      +document.getElementById("ef-bed").value,
+    bathrooms:     +document.getElementById("ef-bath").value,
+    area_sqft:     area,
+    price:         price,
+    price_per_sqft:Math.round(price/area),
+    age_years:     +document.getElementById("ef-age").value,
+    floor_number:  +document.getElementById("ef-floor").value,
+    total_floors:  +document.getElementById("ef-tf").value,
+    location_score:+document.getElementById("ef-loc").value,
+    builder:       document.getElementById("ef-builder").value,
+    rera_id:       document.getElementById("ef-rera").value,
+    status:        document.getElementById("ef-status").value,
+    description:   document.getElementById("ef-desc").value,
+    amenities:     amenArr,
+    images:        imgUrl ? [imgUrl] : [],
+    investment:    {rental_yield:3.5, appreciation_5yr:35, monthly_rent:Math.round(price*0.035/12)},
+    nearby:        {school:"—",hospital:"—",metro:"—",mall:"—"},
+  };
+
+  if (id) {
+    const idx = PROPERTIES.findIndex(p=>p.id===id);
+    if (idx>=0) PROPERTIES[idx]=obj;
+  } else {
+    PROPERTIES.unshift(obj);
+  }
+
+  saveToStorage();
+  renderListings(PROPERTIES);
+  renderDataTable();
+  closeEditModal();
+  showToast(id?"Property updated ✓":"Property added ✓","success");
+}
+
+function deleteProperty(id) {
+  if (!confirm("Delete this property?")) return;
+  PROPERTIES = PROPERTIES.filter(p=>p.id!==id);
+  saveToStorage();
+  renderListings(PROPERTIES);
+  renderDataTable();
+  showToast("Property deleted","success");
+}
+
+function closeEditModal() {
+  document.getElementById("edit-modal").classList.remove("open");
+  document.body.style.overflow="";
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(PROPERTIES,null,2)],{type:"application/json"});
+  const a = document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download="properties.json"; a.click();
+  showToast("Exported properties.json","success");
+}
+
+function importData() {
+  document.getElementById("import-input").click();
+}
+
+function handleImport(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = evt => {
+    try {
+      const data = JSON.parse(evt.target.result);
+      if (!Array.isArray(data)) throw new Error("Expected array");
+      PROPERTIES = data;
+      saveToStorage();
+      renderListings(PROPERTIES);
+      renderDataTable();
+      showToast(`Imported ${data.length} properties ✓`,"success");
+    } catch(err) {
+      showToast("Invalid JSON file","error");
+    }
+  };
+  reader.readAsText(file);
+  e.target.value="";
+}
+
+/* ════════════════════════════════════════════════════════
+   PRICE PREDICTION
+════════════════════════════════════════════════════════ */
+const CITY_PPSF={Mumbai:25000,Delhi:18000,Bangalore:12000,Pune:9000,Hyderabad:8500,Chennai:9500,Kolkata:7000,Ahmedabad:6500,Jaipur:6000,Surat:5500};
+const TYPE_FACTOR={Apartment:1.0,Villa:1.5,"Independent House":1.2,Studio:0.85,Penthouse:1.8};
 
 function runPrediction() {
-  const city      = document.getElementById("p-city").value;
-  const propType  = document.getElementById("p-type").value;
-  const bedrooms  = +document.getElementById("p-bed").value;
-  const bathrooms = +document.getElementById("p-bath").value;
-  const area      = +document.getElementById("p-area").value;
-  const age       = +document.getElementById("p-age").value;
-  const floor     = +document.getElementById("p-floor").value;
-  const locScore  = +document.getElementById("p-loc").value;
-  const amenStr   = document.getElementById("p-amenities").value;
-  const amenCount = amenStr.split(",").filter(a => a.trim()).length;
+  const city=document.getElementById("p-city").value;
+  const type=document.getElementById("p-type").value;
+  const area=+document.getElementById("p-area").value;
+  const age=+document.getElementById("p-age").value;
+  const loc=+document.getElementById("p-loc").value;
+  const amen=+document.getElementById("p-amen").value;
 
-  // Show spinner, hide result
   document.getElementById("pred-spinner").classList.add("show");
   document.getElementById("pred-result").classList.remove("show");
-  document.getElementById("pred-chart-card").style.display = "none";
 
-  setTimeout(() => {
-    const { price, ppsf, model } = simulatePredict({ city, propType, age, area, locScore, amenCount });
-    const lo = Math.round(price * 0.90);
-    const hi = Math.round(price * 1.10);
+  setTimeout(()=>{
+    const base=CITY_PPSF[city]||9000;
+    const tf=TYPE_FACTOR[type]||1.0;
+    const ageD=Math.max(0,1-age*0.012);
+    const amenB=1+amen*0.022;
+    const locB=1+(loc-5)*0.05;
+    const noise=0.94+Math.random()*0.12;
+    const ppsf=Math.round(base*tf*ageD*amenB*locB*noise);
+    const price=ppsf*area;
+    const lo=Math.round(price*0.90), hi=Math.round(price*1.10);
 
-    document.getElementById("res-price").textContent = formatINR(price);
-    document.getElementById("res-range").textContent = `Range: ${formatINR(lo)} – ${formatINR(hi)}`;
-    document.getElementById("res-ppsf").textContent  = `₹${ppsf.toLocaleString("en-IN")}`;
-    document.getElementById("res-model").textContent = model;
+    document.getElementById("res-price").textContent=fmtINR(price);
+    document.getElementById("res-range").textContent=`Confidence Range: ${fmtINR(lo)} – ${fmtINR(hi)}`;
+    document.getElementById("res-ppsf").textContent=`₹${ppsf.toLocaleString("en-IN")}`;
+    document.getElementById("res-model").textContent="Random Forest";
+
+    // Comparables
+    const comps = PROPERTIES
+      .filter(p=>p.city===city && Math.abs(p.bedrooms-(+document.getElementById("p-bed").value))<=1)
+      .slice(0,4);
+    document.getElementById("pred-comparables").innerHTML = comps.map(p=>
+      `<div style="background:var(--surface2);border-radius:10px;padding:12px;cursor:pointer" onclick='openPropertyModal(${JSON.stringify(p).replace(/'/g,"&#39;")})'>
+        <div style="font-size:.78rem;font-weight:600;margin-bottom:4px">${p.title.slice(0,36)}…</div>
+        <div style="font-size:.72rem;color:var(--muted)">${p.locality} · ${p.area_sqft} sqft</div>
+        <div style="font-family:Syne,sans-serif;font-size:.95rem;color:var(--accent2);margin-top:4px">${fmtINRShort(p.price)}</div>
+      </div>`).join("") || `<p style="color:var(--muted);font-size:.82rem">No comparables in dataset for ${city}.</p>`;
 
     document.getElementById("pred-spinner").classList.remove("show");
     document.getElementById("pred-result").classList.add("show");
-
-    // Show comparison chart
-    showPriceBreakdownChart(city, propType, price);
-    document.getElementById("pred-chart-card").style.display = "block";
-  }, 900);
+  },900);
 }
 
-function resetPrediction() {
-  document.getElementById("pred-result").classList.remove("show");
-  document.getElementById("pred-chart-card").style.display = "none";
-}
-
-let pbChart = null;
-function showPriceBreakdownChart(city, pType, predicted) {
-  const ctx = document.getElementById("priceBreakdownChart").getContext("2d");
-  if (pbChart) pbChart.destroy();
-  const similar = Array.from({length:6}, (_,i) => Math.round(predicted * (0.85 + i*0.06)));
-  similar[2] = Math.round(predicted);
-  pbChart = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: ["Comparable 1","Comparable 2","Your Property","Comparable 4","Comparable 5","Comparable 6"],
-      datasets: [{
-        data: similar,
-        backgroundColor: similar.map((_,i) => i===2 ? "#6c47ff" : "rgba(108,71,255,.3)"),
-        borderRadius: 6
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        y: { grid: { color: CHART_DEFAULTS.gridColor },
-             ticks: { callback: v => `₹${(v/100000).toFixed(0)}L` } },
-        x: { grid: { display: false } }
-      }
-    }
-  });
-}
-
-/* ══════════════════════════════════════════════════════════════
-   RECOMMENDATIONS (simulated)
-══════════════════════════════════════════════════════════════ */
-const LOCALITIES = {
-  Mumbai:["Bandra","Andheri","Worli","Juhu","Powai"],
-  Pune:["Koregaon Park","Hinjewadi","Kothrud","Viman Nagar","Baner"],
-  Bangalore:["Whitefield","Koramangala","Indiranagar","HSR Layout","Marathahalli"],
-  Hyderabad:["Gachibowli","Hitech City","Banjara Hills","Jubilee Hills","Madhapur"],
-  Chennai:["Anna Nagar","Velachery","OMR","Adyar","T.Nagar"],
-  Delhi:["Dwarka","Vasant Kunj","Rohini","Saket","Lajpat Nagar"],
-};
-
-function runRecommendation() {
-  const city   = document.getElementById("r-city").value;
-  const bed    = +document.getElementById("r-bed").value;
-  const area   = +document.getElementById("r-area").value;
-  const budget = +document.getElementById("r-price").value;
-  const topN   = +document.getElementById("r-topn").value;
-  const locs   = LOCALITIES[city] || ["Area 1","Area 2","Area 3","Area 4","Area 5"];
-  const types  = ["Apartment","Apartment","Villa","Studio","Apartment"];
-
-  const recs = Array.from({length:topN}, (_,i) => ({
-    locality: locs[i % locs.length],
-    type: types[i % types.length],
-    bed: bed + (i%2===0 ? 0 : 1),
-    area: Math.round(area * (0.9 + i*0.05)),
-    price: Math.round(budget * (0.88 + i*0.06)),
-    sim: +(0.97 - i*0.04).toFixed(2),
-    loc: +(6.5 + Math.random()*3).toFixed(1),
-  }));
-
-  const container = document.getElementById("rec-results");
-  container.innerHTML = recs.map(r => `
-    <div class="rec-card">
-      <div class="rec-sim">● ${(r.sim*100).toFixed(0)}% similarity</div>
-      <div class="rec-name">${r.locality}, ${city}</div>
-      <div class="rec-details">
-        ${r.type} · ${r.bed} BHK · ${r.area.toLocaleString("en-IN")} sqft<br>
-        Location Score: ${r.loc}/10
-      </div>
-      <div class="rec-price">${formatINR(r.price)}</div>
-    </div>
-  `).join("");
-}
-
-/* ══════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════
    INVESTMENT ANALYSIS
-══════════════════════════════════════════════════════════════ */
-const CITY_YIELD_ADJ = {Mumbai:-.5,Delhi:-.3,Bangalore:.5,Hyderabad:.8,Chennai:.2,
-  Pune:.3,Kolkata:.6,Ahmedabad:.9,Jaipur:1.0,Surat:1.1};
+════════════════════════════════════════════════════════ */
+const CITY_YIELD_ADJ={Mumbai:-.5,Delhi:-.3,Bangalore:.5,Hyderabad:.8,Chennai:.2,Pune:.3,Kolkata:.6,Ahmedabad:.9,Jaipur:1.0,Surat:1.1};
+let projChartInst=null;
 
-let projChart = null;
-function runInvestment() {
-  const price   = +document.getElementById("i-price").value;
-  const city    = document.getElementById("i-city").value;
-  const appr    = +document.getElementById("i-appr").value / 100;
-  const yld     = (+document.getElementById("i-yield").value + (CITY_YIELD_ADJ[city]||0)) / 100;
-  const rate    = +document.getElementById("i-rate").value / 100;
-  const tenure  = +document.getElementById("i-tenure").value;
-
-  const grossRent    = price * yld;
-  const effRent      = grossRent * 0.92;
-  const maintenance  = price * 0.01;
-  const taxOnRent    = effRent * 0.30;
-  const netRent      = effRent - maintenance - taxOnRent;
-  const grossYield   = (grossRent/price*100).toFixed(2);
-  const netYield     = (netRent/price*100).toFixed(2);
-
-  const down      = price * 0.20;
-  const loan      = price * 0.80;
-  const mr        = rate / 12;
-  const n         = tenure * 12;
-  const emi       = loan * mr * Math.pow(1+mr,n) / (Math.pow(1+mr,n)-1);
-
-  const proj5  = price * Math.pow(1+appr, 5);
-  const proj10 = price * Math.pow(1+appr,10);
-  const roi5   = ((proj5  - price + netRent*5)  / price * 100).toFixed(1);
-  const roi10  = ((proj10 - price + netRent*10) / price * 100).toFixed(1);
-  const breakeven = (down / netRent).toFixed(1);
-
-  // Grade
-  let grade = "C", rec = "Below-average";
-  const sc = (+netYield>=3?3:+netYield>=2?2:1) + (+roi10>=200?3:+roi10>=150?2:1) + (+breakeven<=10?2:+breakeven<=18?1:0);
-  if (sc>=7){grade="A+";rec="Excellent investment"} else if (sc>=5){grade="A";rec="Good investment"} else if (sc>=3){grade="B";rec="Moderate investment"}
-
-  document.getElementById("inv-grade-badge").textContent = grade;
-  document.getElementById("inv-grade-badge").className = `grade-badge grade-${grade.replace("+","plus")}`;
-  document.getElementById("inv-rec").textContent = rec;
-  document.getElementById("inv-grade-text").textContent = `Investment Grade — ${city}`;
-
-  const rows = [
-    ["Gross Annual Rent", formatINR(grossRent), `${grossYield}% yield`],
-    ["Net Annual Rent",   formatINR(netRent),   `${netYield}% net yield`],
-    ["Projected Value (5yr)",  formatINR(proj5),  `ROI: ${roi5}%`],
-    ["Projected Value (10yr)", formatINR(proj10), `ROI: ${roi10}%`],
-    ["Loan Amount",   formatINR(loan),  "80% LTV"],
-    ["Monthly EMI",   formatINR(emi),   `${tenure}yr tenure`],
-    ["Break-even",    `${breakeven} yrs`, "Rental income vs down payment"],
-  ];
-  document.getElementById("inv-table").innerHTML =
-    rows.map(([l,v,s]) => `<tr><td style="color:var(--muted)">${l}</td><td style="font-weight:600">${v}</td><td style="color:var(--muted);font-size:.8rem">${s}</td></tr>`).join("");
-
-  document.getElementById("inv-result-card").style.display = "block";
-  document.getElementById("inv-chart-card").style.display = "block";
-
-  // Projection chart
-  const yrs = Array.from({length:11},(_,i)=>2024+i);
-  const vals = yrs.map((_,i) => Math.round(price * Math.pow(1+appr,i) / 100000));
-  const cumRent = yrs.map((_,i) => Math.round(netRent * i / 100000));
-
-  const ctx = document.getElementById("projectionChart").getContext("2d");
-  if (projChart) projChart.destroy();
-  projChart = new Chart(ctx, {
-    type:"line",
-    data:{
-      labels: yrs.map(y=>y.toString()),
-      datasets:[
-        {label:"Property Value (₹L)",data:vals,borderColor:"#6c47ff",tension:.4,fill:true,
-          backgroundColor:"rgba(108,71,255,.08)",pointRadius:4},
-        {label:"Cumulative Rent (₹L)",data:cumRent,borderColor:"#00d4a8",tension:.4,fill:false,pointRadius:4}
-      ]
-    },
-    options:{
-      responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{position:"top"}},
-      scales:{
-        y:{grid:{color:CHART_DEFAULTS.gridColor},ticks:{callback:v=>`₹${v}L`}},
-        x:{grid:{display:false}}
-      }
-    }
-  });
+function prefillInvestment(price,city) {
+  document.getElementById("i-price").value=price;
+  document.getElementById("i-city").value=city;
 }
 
-/* ══════════════════════════════════════════════════════════════
-   ANOMALY DETECTION SECTION
-══════════════════════════════════════════════════════════════ */
-let anomalyInit = false;
-function initAnomalySection() {
-  if (anomalyInit) return; anomalyInit = true;
+function runInvestment() {
+  const price=+document.getElementById("i-price").value;
+  const city=document.getElementById("i-city").value;
+  const appr=+document.getElementById("i-appr").value/100;
+  const yldBase=+document.getElementById("i-yield").value;
+  const yld=(yldBase+(CITY_YIELD_ADJ[city]||0))/100;
+  const rate=+document.getElementById("i-rate").value/100;
+  const tenure=+document.getElementById("i-tenure").value;
+  const dpPct=+document.getElementById("i-dp").value/100;
+  const taxRate=+document.getElementById("i-tax").value/100;
 
-  // City anomaly bars
-  const cityAnomalyCounts = [12,10,9,8,9,11,10,9,8,11];
-  const cityAnomalyPct    = cityAnomalyCounts.map((c,i)=>(c/200*100).toFixed(1));
-  const barsHtml = CITIES.map((city,i) => `
-    <div class="anomaly-row">
-      <div style="width:90px;font-size:.82rem">${city}</div>
-      <div class="anomaly-bar-wrap">
-        <div class="anomaly-bar" style="width:${cityAnomalyPct[i]*5}%;background:${palette[i]}"></div>
-      </div>
-      <div style="width:60px;text-align:right;font-size:.82rem;font-weight:600">${cityAnomalyPct[i]}%</div>
-    </div>
-  `).join("");
-  document.getElementById("anomaly-city-bars").innerHTML = barsHtml;
+  const grossRent=price*yld;
+  const effRent=grossRent*0.92;
+  const maintenance=price*0.01;
+  const tax=effRent*taxRate;
+  const netRent=effRent-maintenance-tax;
+  const down=price*dpPct, loan=price*(1-dpPct);
+  const mr=rate/12, n=tenure*12;
+  const emi=loan*mr*Math.pow(1+mr,n)/(Math.pow(1+mr,n)-1);
+  const proj5=price*Math.pow(1+appr,5), proj10=price*Math.pow(1+appr,10);
+  const roi5=((proj5-price+netRent*5)/price*100).toFixed(1);
+  const roi10=((proj10-price+netRent*10)/price*100).toFixed(1);
+  const breakeven=(down/netRent).toFixed(1);
 
-  // Method breakdown
-  new Chart(document.getElementById("anomalyMethodChart"), {
-    type:"pie",
-    data:{
-      labels:["Isolation Forest","Z-Score","IQR Fence","Domain Rules"],
-      datasets:[{data:[54,43,38,22],backgroundColor:["#6c47ff","#ff6b6b","#f5c842","#00d4a8"],borderWidth:0}]
-    },
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{position:"right",labels:{padding:16,usePointStyle:true}}},cutout:"50%"}
-  });
+  let grade="C",rec="Below-average — consider other options";
+  const sc=((netRent/price*100)>=3?3:(netRent/price*100)>=2?2:1)+(+roi10>=200?3:+roi10>=150?2:1)+(+breakeven<=10?2:+breakeven<=18?1:0);
+  if(sc>=7){grade="A+";rec="Excellent — strong yield & appreciation"}
+  else if(sc>=5){grade="A";rec="Good investment with solid returns"}
+  else if(sc>=3){grade="B";rec="Moderate — acceptable risk/return"}
 
-  // Sample anomaly table
-  const samples = [
-    {id:"PROP00042",city:"Mumbai",type:"Penthouse",price:"₹4.2 Cr",ppsf:"₹52,000",score:"-0.41",method:"IF + Z-Score",status:"high"},
-    {id:"PROP00187",city:"Pune",type:"Apartment",price:"₹2.1 L",ppsf:"₹175",score:"-0.58",method:"Domain Rules",status:"high"},
-    {id:"PROP00391",city:"Delhi",type:"Villa",price:"₹8.9 Cr",ppsf:"₹89,000",score:"-0.35",method:"IQR Fence",status:"medium"},
-    {id:"PROP00512",city:"Bangalore",type:"Studio",price:"₹5.8 L",ppsf:"₹580",score:"-0.29",method:"Z-Score",status:"medium"},
-    {id:"PROP00733",city:"Hyderabad",type:"Apartment",price:"₹1.05 Cr",ppsf:"₹8,750",score:"-0.19",method:"IF",status:"low"},
-    {id:"PROP01024",city:"Chennai",type:"Ind. House",price:"₹3.8 Cr",ppsf:"₹38,000",score:"-0.44",method:"IF + IQR",status:"high"},
+  document.getElementById("inv-grade-ring").textContent=grade;
+  document.getElementById("inv-grade-ring").className=`grade-ring g-${grade.replace("+","plus")}`;
+  document.getElementById("inv-rec-text").textContent=rec;
+
+  const rows=[
+    ["Gross Annual Rent",fmtINR(grossRent),`${(grossRent/price*100).toFixed(2)}% gross yield`],
+    ["Net Annual Rent",fmtINR(netRent),`${(netRent/price*100).toFixed(2)}% net yield`],
+    ["Monthly Rent Est.",fmtINR(grossRent/12),"Estimated market rent"],
+    ["Projected Value (5yr)",fmtINR(proj5),`ROI: ${roi5}%`],
+    ["Projected Value (10yr)",fmtINR(proj10),`ROI: ${roi10}%`],
+    ["Down Payment",fmtINR(down),`${(dpPct*100).toFixed(0)}% of price`],
+    ["Loan Amount",fmtINR(loan),`${tenure}yr tenure`],
+    ["Monthly EMI",fmtINR(Math.round(emi)),"Based on loan params"],
+    ["Break-even Period",`${breakeven} years`,"Rental income vs down payment"],
   ];
-  document.getElementById("anomaly-tbody").innerHTML = samples.map(r => {
-    const badge = r.status==="high"?"badge-red":r.status==="medium"?"badge-gold":"badge-blue";
-    return `<tr>
-      <td><code style="color:var(--accent);font-size:.8rem">${r.id}</code></td>
+  document.getElementById("inv-table").innerHTML=rows.map(([l,v,s])=>
+    `<tr><td style="color:var(--muted)">${l}</td><td style="font-weight:600">${v}</td><td style="color:var(--muted);font-size:.78rem">${s}</td></tr>`
+  ).join("");
+
+  document.getElementById("inv-result").classList.add("show");
+  document.getElementById("inv-chart-wrap").classList.add("show");
+
+  const yrs=Array.from({length:11},(_,i)=>2024+i);
+  const vals=yrs.map((_,i)=>Math.round(price*Math.pow(1+appr,i)/100000));
+  const cumR=yrs.map((_,i)=>Math.round(netRent*i/100000));
+  const ctx=document.getElementById("projChart").getContext("2d");
+  if(projChartInst)projChartInst.destroy();
+  projChartInst=new Chart(ctx,{type:"line",data:{labels:yrs.map(String),datasets:[
+    {label:"Property Value (₹L)",data:vals,borderColor:"#6c47ff",tension:.4,fill:true,backgroundColor:"rgba(108,71,255,.08)",pointRadius:4},
+    {label:"Cumulative Net Rent (₹L)",data:cumR,borderColor:"#00d4a8",tension:.4,fill:false,pointRadius:4}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"top"}},scales:{y:{grid:{color:"rgba(255,255,255,.06)"},ticks:{callback:v=>`₹${v}L`}},x:{grid:{display:false}}}}});
+}
+
+/* ════════════════════════════════════════════════════════
+   BANKING SCHEMES
+════════════════════════════════════════════════════════ */
+function renderBanks(banks) {
+  document.getElementById("bank-grid").innerHTML = banks.map(b=>`
+    <div class="bank-card" onclick="openBankModal('${b.id}')">
+      <div class="bank-header">
+        <div class="bank-logo" style="background:${b.logo_color}">${b.short}</div>
+        <div>
+          <div class="bank-name">${b.bank}</div>
+          <div class="bank-scheme">${b.scheme_name} ${b.government_scheme?`<span class="bank-govt-badge">Govt</span>`:""}</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:8px;margin-bottom:10px">
+        <div class="bank-rate">${b.interest_rate_min}%</div>
+        <div style="padding-bottom:4px"><span style="color:var(--muted);font-size:.75rem">to ${b.interest_rate_max}%</span> <span class="bank-rate-label">p.a.</span></div>
+      </div>
+      <div class="bank-details">
+        <div class="bank-detail-item"><div class="bank-detail-label">Max Loan</div>${fmtINRShort(b.max_loan_amount)}</div>
+        <div class="bank-detail-item"><div class="bank-detail-label">Max Tenure</div>${b.max_tenure_years} years</div>
+        <div class="bank-detail-item"><div class="bank-detail-label">LTV Ratio</div>${b.ltv_ratio}%</div>
+        <div class="bank-detail-item"><div class="bank-detail-label">Processing Fee</div><span style="font-size:.7rem">${b.processing_fee.split("(")[0].trim()}</span></div>
+      </div>
+      <div class="bank-features">
+        ${b.special_features.slice(0,3).map(f=>`<div class="bank-feature">${f}</div>`).join("")}
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px">
+        <span class="badge badge-blue">${b.scheme_type}</span>
+        <span class="badge badge-green">Prepayment: ${b.prepayment_charge}</span>
+      </div>
+    </div>`).join("");
+}
+
+function filterBanks(filter, btn) {
+  document.querySelectorAll(".active-filter").forEach(b=>b.classList.remove("active-filter","btn-primary"));
+  btn.classList.add("active-filter","btn-primary");
+  let filtered = [...BANKS];
+  if (filter==="govt")  filtered = filtered.filter(b=>b.government_scheme);
+  if (filter==="low")   filtered = [...filtered].sort((a,b)=>a.interest_rate_min-b.interest_rate_min);
+  if (filter==="high")  filtered = [...filtered].sort((a,b)=>b.ltv_ratio-a.ltv_ratio);
+  renderBanks(filtered);
+}
+
+function openBankModal(id) {
+  const b = BANKS.find(x=>x.id===id);
+  if (!b) return;
+  document.getElementById("modal-title").textContent = b.scheme_name;
+  document.getElementById("modal-subtitle").textContent = b.bank;
+  const elig = b.eligibility||{};
+  document.getElementById("modal-body").innerHTML = `
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:22px;padding:18px;background:var(--surface2);border-radius:12px">
+      <div class="bank-logo" style="background:${b.logo_color};width:56px;height:56px;font-size:.9rem">${b.short}</div>
+      <div>
+        <div style="font-family:Syne,sans-serif;font-size:1.3rem;font-weight:800;color:var(--accent2)">${b.interest_rate_min}% – ${b.interest_rate_max}%</div>
+        <div style="color:var(--muted);font-size:.82rem">Interest Rate p.a. · ${b.scheme_type}</div>
+      </div>
+      ${b.government_scheme?`<span class="bank-govt-badge" style="margin-left:auto">Govt Scheme</span>`:""}
+    </div>
+    <div class="modal-specs" style="margin-bottom:20px">
+      <div class="modal-spec"><div class="modal-spec-val">${fmtINRShort(b.max_loan_amount)}</div><div class="modal-spec-lbl">Max Loan</div></div>
+      <div class="modal-spec"><div class="modal-spec-val">${b.max_tenure_years} yr</div><div class="modal-spec-lbl">Max Tenure</div></div>
+      <div class="modal-spec"><div class="modal-spec-val">${b.ltv_ratio}%</div><div class="modal-spec-lbl">LTV Ratio</div></div>
+      <div class="modal-spec"><div class="modal-spec-val">${b.prepayment_charge}</div><div class="modal-spec-lbl">Prepayment</div></div>
+    </div>
+    <div class="modal-section"><div class="modal-section-title">Eligibility</div>
+      <div class="modal-nearby">
+        <div class="nearby-item"><div class="nearby-label">Age Range</div>${elig.min_age||18} – ${elig.max_age||70} years</div>
+        <div class="nearby-item"><div class="nearby-label">Min Monthly Income</div>${elig.min_income_monthly ? fmtINRShort(elig.min_income_monthly*12)+" p.a." : "N/A"}</div>
+        <div class="nearby-item"><div class="nearby-label">Employment Types</div>${(elig.employment||[]).join(", ")}</div>
+        <div class="nearby-item"><div class="nearby-label">Processing Fee</div>${b.processing_fee}</div>
+      </div>
+    </div>
+    ${b.subsidy_details ? `<div class="modal-section"><div class="modal-section-title">Subsidy Details (PMAY)</div>
+      <div class="modal-nearby">
+        ${Object.entries(b.subsidy_details).map(([cat,d])=>`<div class="nearby-item"><div class="nearby-label">${cat}</div>Income ≤ ${fmtINRShort(d.income_limit*12)} · ${d.subsidy_pct}% subsidy · Max loan ${fmtINRShort(d.max_loan)}</div>`).join("")}
+      </div>
+    </div>` : ""}
+    <div class="modal-section"><div class="modal-section-title">Key Features</div>
+      <div style="display:flex;flex-direction:column;gap:8px">${b.special_features.map(f=>`<div class="bank-feature">${f}</div>`).join("")}</div>
+    </div>
+    <div style="margin-top:20px;padding-top:18px;border-top:1px solid var(--border);display:flex;gap:10px">
+      <a href="${b.apply_url}" target="_blank" class="btn btn-primary" style="text-decoration:none">🏦 Apply Online</a>
+      <button class="btn btn-ghost" onclick="prefillEMI(null,'${b.interest_rate_min}');showSection('emi',null);closeModal()">🧮 Calculate EMI for this Rate</button>
+    </div>`;
+  document.getElementById("prop-modal").classList.add("open");
+  document.body.style.overflow="hidden";
+}
+
+/* ════════════════════════════════════════════════════════
+   EMI CALCULATOR
+════════════════════════════════════════════════════════ */
+let emiDonutInst=null;
+
+function prefillEMI(price, rate) {
+  if (price) document.getElementById("ec-price").value=price;
+  if (rate)  { document.getElementById("ec-rate").value=rate; document.querySelector("#ec-rate + span").textContent=parseFloat(rate).toFixed(1)+"%"; }
+  calcEMI();
+}
+
+function calcEMI() {
+  const price  = +document.getElementById("ec-price").value||0;
+  const dp     = +document.getElementById("ec-dp").value/100;
+  const rate   = +document.getElementById("ec-rate").value/100;
+  const tenure = +document.getElementById("ec-tenure").value;
+
+  const loan   = price*(1-dp);
+  const mr     = rate/12, n=tenure*12;
+  const emi    = loan>0 ? loan*mr*Math.pow(1+mr,n)/(Math.pow(1+mr,n)-1) : 0;
+  const totalP = emi*n;
+  const totalI = totalP-loan;
+
+  document.getElementById("emi-amount").textContent    = fmtINR(Math.round(emi));
+  document.getElementById("emi-principal").textContent = fmtINRShort(Math.round(loan));
+  document.getElementById("emi-interest").textContent  = fmtINRShort(Math.round(totalI));
+  document.getElementById("emi-total").textContent     = fmtINRShort(Math.round(totalP));
+
+  // Donut
+  const ctx = document.getElementById("emiDonut").getContext("2d");
+  if (emiDonutInst) emiDonutInst.destroy();
+  emiDonutInst = new Chart(ctx,{type:"doughnut",data:{labels:["Principal","Interest"],
+    datasets:[{data:[Math.round(loan),Math.round(totalI)],backgroundColor:["#6c47ff","#ff6b6b"],borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:"68%",
+      plugins:{legend:{position:"bottom",labels:{padding:20,usePointStyle:true}},
+        tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${fmtINR(ctx.parsed)}`}}}}});
+
+  // Amortisation
+  buildAmortTable(loan, mr, n, emi, tenure);
+  updateEMIBanks();
+}
+
+function buildAmortTable(loan, mr, n, emi, tenure) {
+  const rows=[];
+  let balance=loan;
+  for(let yr=1;yr<=Math.min(tenure,5);yr++){
+    const opening=balance;
+    let annPrin=0, annInt=0;
+    for(let m=0;m<12;m++){
+      const intP=balance*mr, prinP=emi-intP;
+      annInt+=intP; annPrin+=prinP; balance-=prinP;
+    }
+    rows.push(`<tr>
+      <td>${yr}</td>
+      <td>${fmtINRShort(Math.round(opening))}</td>
+      <td>${fmtINRShort(Math.round(emi*12))}</td>
+      <td style="color:var(--accent2)">${fmtINRShort(Math.round(annPrin))}</td>
+      <td style="color:var(--accent3)">${fmtINRShort(Math.round(annInt))}</td>
+      <td>${fmtINRShort(Math.round(balance))}</td>
+    </tr>`);
+  }
+  document.getElementById("amort-body").innerHTML=rows.join("");
+}
+
+function updateEMIBanks() {
+  const price = +document.getElementById("ec-price").value||8500000;
+  const sorted = [...BANKS].sort((a,b)=>a.interest_rate_min-b.interest_rate_min).slice(0,4);
+  document.getElementById("emi-banks").innerHTML = sorted.map(b=>{
+    const loan=price*0.8, mr=b.interest_rate_min/100/12, n=240;
+    const emi=loan*mr*Math.pow(1+mr,n)/(Math.pow(1+mr,n)-1);
+    return `<div style="display:flex;justify-content:space-between;align-items:center;background:var(--surface3);border-radius:8px;padding:10px 14px;cursor:pointer" onclick="openBankModal('${b.id}')">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="bank-logo" style="background:${b.logo_color};width:28px;height:28px;font-size:.58rem">${b.short}</div>
+        <div><div style="font-size:.8rem;font-weight:600">${b.bank}</div><div style="font-size:.68rem;color:var(--muted)">${b.interest_rate_min}% p.a.</div></div>
+      </div>
+      <div style="text-align:right"><div style="font-size:.88rem;font-weight:700;color:var(--accent2)">${fmtINR(Math.round(emi))}</div><div style="font-size:.65rem;color:var(--muted)">per month</div></div>
+    </div>`;
+  }).join("");
+}
+
+/* ════════════════════════════════════════════════════════
+   DASHBOARD CHARTS
+════════════════════════════════════════════════════════ */
+const PAL=["#6c47ff","#00d4a8","#ff6b6b","#f5c842","#a78bfa","#34d399","#fb923c","#38bdf8","#f472b6","#84cc16"];
+let dashInit=false;
+
+function initDashboard(){
+  if(dashInit)return; dashInit=true;
+  const cities=Object.keys(CITIES_DATA);
+  const prices=Object.values(CITIES_DATA).map(d=>d.avg_price);
+
+  new Chart(document.getElementById("cityChart"),{type:"bar",data:{labels:cities,
+    datasets:[{label:"Avg Price (₹L)",data:prices,backgroundColor:PAL,borderRadius:6}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{y:{grid:{color:"rgba(255,255,255,.06)"},beginAtZero:true},x:{grid:{display:false}}}}});
+
+  const typeCounts={Apartment:5,Villa:2,"Independent House":1,Studio:2,Penthouse:1};
+  new Chart(document.getElementById("typeChart"),{type:"doughnut",data:{
+    labels:Object.keys(typeCounts),datasets:[{data:Object.values(typeCounts),backgroundColor:PAL,borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:"65%",
+      plugins:{legend:{position:"right",labels:{padding:16,usePointStyle:true}}}}});
+
+  new Chart(document.getElementById("modelChart"),{type:"bar",data:{
+    labels:["Linear Reg","Ridge","Random Forest","XGBoost","Neural Net"],
+    datasets:[
+      {label:"R² Score",data:[0.72,0.73,0.91,0.93,0.89],backgroundColor:"#6c47ff",borderRadius:5},
+      {label:"MAPE %",data:[18.2,17.8,9.4,8.1,10.3],backgroundColor:"#00d4a8",borderRadius:5}
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"top"}},
+      scales:{y:{grid:{color:"rgba(255,255,255,.06)"}},x:{grid:{display:false}}}}});
+
+  const yrs=["2019","2020","2021","2022","2023","2024","2025"];
+  new Chart(document.getElementById("trendChart"),{type:"line",data:{labels:yrs,datasets:[
+    {label:"Mumbai",data:[85,84,88,96,104,110,112],borderColor:"#6c47ff",tension:.4,fill:false,pointRadius:3},
+    {label:"Bangalore",data:[45,46,50,58,62,66,68],borderColor:"#00d4a8",tension:.4,fill:false,pointRadius:3},
+    {label:"Hyderabad",data:[36,37,40,47,51,53,54],borderColor:"#f5c842",tension:.4,fill:false,pointRadius:3},
+    {label:"Pune",data:[40,40,43,52,58,60,62],borderColor:"#ff6b6b",tension:.4,fill:false,pointRadius:3},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"top"}},
+    scales:{y:{grid:{color:"rgba(255,255,255,.06)"},title:{display:true,text:"₹ Lakhs"}},x:{grid:{display:false}}}}});
+}
+
+/* ════════════════════════════════════════════════════════
+   MARKET HEATMAP
+════════════════════════════════════════════════════════ */
+let marketInit=false;
+function initMarket(){
+  if(marketInit)return; marketInit=true;
+  const cities=Object.keys(CITIES_DATA);
+  const maxP=Math.max(...Object.values(CITIES_DATA).map(d=>d.ppsf));
+  document.getElementById("heatmap-cells").innerHTML=cities.map(c=>{
+    const d=CITIES_DATA[c]; const intensity=d.ppsf/maxP;
+    return `<div class="heat-cell" style="background:rgba(108,71,255,${0.08+intensity*0.65})">
+      <div class="heat-city">${c}</div>
+      <div class="heat-price">₹${d.avg_price}L avg</div>
+      <div class="heat-ppsf">₹${d.ppsf.toLocaleString("en-IN")}/sqft</div>
+    </div>`;
+  }).join("");
+
+  const sorted=[...cities].sort((a,b)=>CITIES_DATA[b].ppsf-CITIES_DATA[a].ppsf);
+  new Chart(document.getElementById("rankChart"),{type:"bar",data:{labels:sorted,
+    datasets:[{label:"₹/sqft",data:sorted.map(c=>CITIES_DATA[c].ppsf),backgroundColor:PAL,borderRadius:6}]},
+    options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:{color:"rgba(255,255,255,.06)"},ticks:{callback:v=>`₹${(v/1000).toFixed(0)}K`}},y:{grid:{display:false}}}}});
+
+  new Chart(document.getElementById("yieldChart"),{type:"bar",data:{labels:cities,
+    datasets:[{label:"Net Rental Yield %",data:Object.values(CITIES_DATA).map(d=>d.yield),
+      backgroundColor:Object.values(CITIES_DATA).map(d=>d.yield>4?"#00d4a8":"#6c47ff"),borderRadius:6}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{y:{grid:{color:"rgba(255,255,255,.06)"},ticks:{callback:v=>`${v}%`},min:0,max:6},x:{grid:{display:false}}}}});
+}
+
+/* ════════════════════════════════════════════════════════
+   ANOMALY DETECTION
+════════════════════════════════════════════════════════ */
+let anomalyInit=false;
+function initAnomaly(){
+  if(anomalyInit)return; anomalyInit=true;
+  const cities=Object.keys(CITIES_DATA);
+  const pcts=[6.0,5.0,4.5,4.0,4.5,5.5,5.0,4.5,4.0,5.5];
+  document.getElementById("anom-bars").innerHTML=cities.map((c,i)=>`
+    <div class="anom-row">
+      <div style="width:86px;font-size:.8rem">${c}</div>
+      <div class="anom-bar-wrap"><div class="anom-bar" style="width:${pcts[i]*8}%;background:${PAL[i]}"></div></div>
+      <div style="width:44px;text-align:right;font-size:.8rem;font-weight:600">${pcts[i]}%</div>
+    </div>`).join("");
+
+  new Chart(document.getElementById("anomMethodChart"),{type:"pie",data:{
+    labels:["Isolation Forest","Z-Score","IQR Fence","Domain Rules"],
+    datasets:[{data:[54,43,38,22],backgroundColor:["#6c47ff","#ff6b6b","#f5c842","#00d4a8"],borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:"right",labels:{padding:16,usePointStyle:true}}},cutout:"50%"}});
+
+  const samples=[
+    {id:"PROP00042",city:"Mumbai",type:"Penthouse",price:"₹4.2 Cr",ppsf:"₹52,000",score:"-0.41",method:"IF + Z-Score",risk:"high"},
+    {id:"PROP00187",city:"Pune",type:"Apartment",price:"₹2.1 L",ppsf:"₹175",score:"-0.58",method:"Domain Rules",risk:"high"},
+    {id:"PROP00391",city:"Delhi",type:"Villa",price:"₹8.9 Cr",ppsf:"₹89,000",score:"-0.35",method:"IQR Fence",risk:"medium"},
+    {id:"PROP00512",city:"Bangalore",type:"Studio",price:"₹5.8 L",ppsf:"₹580",score:"-0.29",method:"Z-Score",risk:"medium"},
+    {id:"PROP00733",city:"Hyderabad",type:"Apartment",price:"₹1.05 Cr",ppsf:"₹8,750",score:"-0.19",method:"IF",risk:"low"},
+    {id:"PROP01024",city:"Chennai",type:"Ind. House",price:"₹3.8 Cr",ppsf:"₹38,000",score:"-0.44",method:"IF + IQR",risk:"high"},
+  ];
+  document.getElementById("anom-tbody").innerHTML=samples.map(r=>{
+    const bc=r.risk==="high"?"badge-red":r.risk==="medium"?"badge-gold":"badge-blue";
+    return `<tr><td><code style="color:var(--accent);font-size:.78rem">${r.id}</code></td>
       <td>${r.city}</td><td>${r.type}</td><td>${r.price}</td><td>${r.ppsf}</td>
       <td style="color:var(--accent3);font-weight:600">${r.score}</td>
       <td><span class="badge badge-blue">${r.method}</span></td>
-      <td><span class="badge ${badge}">${r.status.charAt(0).toUpperCase()+r.status.slice(1)} Risk</span></td>
-    </tr>`;
+      <td><span class="badge ${bc}">${r.risk.charAt(0).toUpperCase()+r.risk.slice(1)} Risk</span></td></tr>`;
   }).join("");
 }
 
-/* ══════════════════════════════════════════════════════════════
-   MARKET HEATMAP
-══════════════════════════════════════════════════════════════ */
-let marketInit = false;
-let rankChartInst = null, yieldChartInst = null;
-function initMarket() {
-  if (marketInit) return; marketInit = true;
-
-  // Heatmap cells
-  const maxPrice = Math.max(...AVG_PPSF);
-  const html = CITIES.map((city,i) => {
-    const intensity = AVG_PPSF[i] / maxPrice;
-    const bg = `rgba(108,71,255,${0.1 + intensity*0.7})`;
-    return `<div class="heat-cell" style="background:${bg}">
-      <div class="heat-city">${city}</div>
-      <div class="heat-price">₹${AVG_PRICE[i]}L avg</div>
-      <div class="heat-ppsf">₹${AVG_PPSF[i].toLocaleString("en-IN")}/sqft</div>
-    </div>`;
-  }).join("");
-  document.getElementById("heatmap-grid").innerHTML = html;
-
-  // Price per sqft ranking
-  const sorted = CITIES.map((c,i)=>({city:c,ppsf:AVG_PPSF[i]})).sort((a,b)=>b.ppsf-a.ppsf);
-  rankChartInst = new Chart(document.getElementById("rankChart"), {
-    type:"bar",
-    data:{
-      labels:sorted.map(s=>s.city),
-      datasets:[{label:"₹/sqft",data:sorted.map(s=>s.ppsf),backgroundColor:palette,borderRadius:6}]
-    },
-    options:{
-      indexAxis:"y",responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false}},
-      scales:{x:{grid:{color:CHART_DEFAULTS.gridColor},ticks:{callback:v=>`₹${(v/1000).toFixed(0)}K`}},y:{grid:{display:false}}}
-    }
-  });
-
-  // Rental yield
-  yieldChartInst = new Chart(document.getElementById("yieldChart"), {
-    type:"bar",
-    data:{
-      labels:CITIES,
-      datasets:[{label:"Net Rental Yield (%)",data:YIELDS,backgroundColor:YIELDS.map(y=>y>4?"#00d4a8":"#6c47ff"),borderRadius:6}]
-    },
-    options:{
-      responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false}},
-      scales:{
-        y:{grid:{color:CHART_DEFAULTS.gridColor},ticks:{callback:v=>`${v}%`},min:0,max:6},
-        x:{grid:{display:false}}
-      }
-    }
-  });
+/* ════════════════════════════════════════════════════════
+   TOAST
+════════════════════════════════════════════════════════ */
+function showToast(msg, type="success") {
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.className=`toast ${type} show`;
+  setTimeout(()=>t.classList.remove("show"),3000);
 }
 
-/* ══════════════════════════════════════════════════════════════
-   HELPERS
-══════════════════════════════════════════════════════════════ */
-function formatINR(num) {
-  num = Math.round(num);
-  if (num >= 10000000) return `₹${(num/10000000).toFixed(2)} Cr`;
-  if (num >= 100000)   return `₹${(num/100000).toFixed(2)} L`;
-  return `₹${num.toLocaleString("en-IN")}`;
+/* ════════════════════════════════════════════════════════
+   FALLBACKS
+════════════════════════════════════════════════════════ */
+function getFallbackProperties(){
+  return [{
+    id:"PROP001",title:"3BHK Apartment — Koregaon Park",city:"Pune",locality:"Koregaon Park",
+    property_type:"Apartment",bedrooms:3,bathrooms:3,area_sqft:1650,age_years:2,
+    floor_number:8,total_floors:18,location_score:9.2,price:12500000,price_per_sqft:7576,
+    amenities:["Pool","Gym","Parking","Security"],status:"available",
+    possession:"Ready to Move",builder:"Godrej Properties",rera_id:"P52100012345",
+    description:"Premium apartment in gated society.",images:[],
+    nearby:{school:"0.8km",hospital:"1.2km",metro:"2.1km",mall:"1.5km"},
+    investment:{rental_yield:3.8,appreciation_5yr:42,monthly_rent:38000}
+  }];
 }
+function getFallbackBanks(){
+  return [{id:"BANK001",bank:"State Bank of India",short:"SBI",logo_color:"#1a3a8f",
+    scheme_name:"SBI Home Loan",scheme_type:"Regular",interest_rate_min:8.50,interest_rate_max:9.85,
+    max_loan_amount:75000000,max_tenure_years:30,processing_fee:"0.35%",ltv_ratio:90,
+    prepayment_charge:"Nil",government_scheme:false,
+    eligibility:{min_age:18,max_age:70,min_income_monthly:25000,employment:["Salaried","Self-Employed"]},
+    special_features:["No prepayment penalty","Free CIBIL check","Balance transfer"],
+    contact:"1800-11-2211",apply_url:"https://sbi.co.in"}];
+}
+
+/* ════════════════════════════════════════════════════════
+   KEYBOARD ESC
+════════════════════════════════════════════════════════ */
+document.addEventListener("keydown", e => { if(e.key==="Escape"){ closeModal(); closeEditModal(); } });
+
+/* ════════════════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════════════════ */
+loadData();
 </script>
 </body>
 </html>

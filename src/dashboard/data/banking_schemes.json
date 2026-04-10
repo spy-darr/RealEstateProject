@@ -1,0 +1,249 @@
+[
+  {
+    "id": "BANK001",
+    "bank": "State Bank of India",
+    "short": "SBI",
+    "logo_color": "#1a3a8f",
+    "scheme_name": "SBI Home Loan",
+    "scheme_type": "Regular Home Loan",
+    "interest_rate_min": 8.50,
+    "interest_rate_max": 9.85,
+    "max_loan_amount": 75000000,
+    "max_tenure_years": 30,
+    "processing_fee": "0.35% (min ₹2,000, max ₹10,000)",
+    "ltv_ratio": 90,
+    "prepayment_charge": "Nil for floating rate",
+    "eligibility": {
+      "min_age": 18,
+      "max_age": 70,
+      "min_income_monthly": 25000,
+      "employment": ["Salaried","Self-Employed","NRI"]
+    },
+    "special_features": [
+      "No prepayment penalty on floating rate",
+      "Free CIBIL score check",
+      "Balance transfer facility",
+      "Step-up EMI option for young borrowers"
+    ],
+    "government_scheme": false,
+    "contact": "1800-11-2211",
+    "apply_url": "https://www.sbi.co.in/web/home-loan"
+  },
+  {
+    "id": "BANK002",
+    "bank": "HDFC Bank",
+    "short": "HDFC",
+    "logo_color": "#004c8f",
+    "scheme_name": "HDFC Home Loan",
+    "scheme_type": "Regular Home Loan",
+    "interest_rate_min": 8.70,
+    "interest_rate_max": 9.65,
+    "max_loan_amount": 100000000,
+    "max_tenure_years": 30,
+    "processing_fee": "Up to 0.50% of loan amount",
+    "ltv_ratio": 90,
+    "prepayment_charge": "Nil for floating rate",
+    "eligibility": {
+      "min_age": 21,
+      "max_age": 65,
+      "min_income_monthly": 30000,
+      "employment": ["Salaried","Self-Employed","NRI","Professionals"]
+    },
+    "special_features": [
+      "Online approval in 48 hours",
+      "Doorstep document pickup",
+      "Flexible repayment options",
+      "Top-up loan facility"
+    ],
+    "government_scheme": false,
+    "contact": "1800-266-4332",
+    "apply_url": "https://www.hdfc.com/housing-loan"
+  },
+  {
+    "id": "BANK003",
+    "bank": "ICICI Bank",
+    "short": "ICICI",
+    "logo_color": "#f07820",
+    "scheme_name": "ICICI Home Loan",
+    "scheme_type": "Regular Home Loan",
+    "interest_rate_min": 8.75,
+    "interest_rate_max": 9.80,
+    "max_loan_amount": 75000000,
+    "max_tenure_years": 30,
+    "processing_fee": "0.50% + GST",
+    "ltv_ratio": 90,
+    "prepayment_charge": "Nil",
+    "eligibility": {
+      "min_age": 21,
+      "max_age": 65,
+      "min_income_monthly": 35000,
+      "employment": ["Salaried","Self-Employed","NRI"]
+    },
+    "special_features": [
+      "Instant digital sanction letter",
+      "Smart EMI option (lower initial EMI)",
+      "Home insurance bundled",
+      "Property search assistance"
+    ],
+    "government_scheme": false,
+    "contact": "1800-1080",
+    "apply_url": "https://www.icicibank.com/home-loans"
+  },
+  {
+    "id": "BANK004",
+    "bank": "Pradhan Mantri Awas Yojana",
+    "short": "PMAY",
+    "logo_color": "#ff6600",
+    "scheme_name": "PMAY — Credit Linked Subsidy",
+    "scheme_type": "Government Subsidy Scheme",
+    "interest_rate_min": 6.50,
+    "interest_rate_max": 8.50,
+    "max_loan_amount": 6000000,
+    "max_tenure_years": 20,
+    "processing_fee": "Nil (government scheme)",
+    "ltv_ratio": 90,
+    "prepayment_charge": "Nil",
+    "eligibility": {
+      "min_age": 18,
+      "max_age": 70,
+      "min_income_monthly": 0,
+      "max_income_annual": 1800000,
+      "employment": ["Salaried","Self-Employed","EWS","LIG","MIG"]
+    },
+    "subsidy_details": {
+      "EWS_LIG": {"income_limit": 300000,"subsidy_pct": 6.5,"max_loan": 600000},
+      "MIG_I":   {"income_limit": 600000,"subsidy_pct": 4.0,"max_loan": 900000},
+      "MIG_II":  {"income_limit": 1800000,"subsidy_pct": 3.0,"max_loan": 1200000}
+    },
+    "special_features": [
+      "Interest subsidy of 3%–6.5% on home loans",
+      "First-time home buyers only",
+      "Subsidy credited upfront to reduce EMI",
+      "Applicable for new construction and purchase",
+      "No income proof required for EWS/LIG category"
+    ],
+    "government_scheme": true,
+    "contact": "1800-11-6163",
+    "apply_url": "https://pmaymis.gov.in"
+  },
+  {
+    "id": "BANK005",
+    "bank": "Axis Bank",
+    "short": "AXIS",
+    "logo_color": "#97144d",
+    "scheme_name": "Axis Bank Home Loan",
+    "scheme_type": "Regular Home Loan",
+    "interest_rate_min": 8.75,
+    "interest_rate_max": 9.10,
+    "max_loan_amount": 50000000,
+    "max_tenure_years": 30,
+    "processing_fee": "1% of loan amount",
+    "ltv_ratio": 85,
+    "prepayment_charge": "Nil for floating rate",
+    "eligibility": {
+      "min_age": 21,
+      "max_age": 65,
+      "min_income_monthly": 25000,
+      "employment": ["Salaried","Self-Employed"]
+    },
+    "special_features": [
+      "Shubh Aarambh Home Loan (12 EMI waiver)",
+      "Fast Track Home Loan (7-day disbursal)",
+      "eDGE Home Loan (exclusive digital offer)",
+      "Doorstep banking services"
+    ],
+    "government_scheme": false,
+    "contact": "1860-419-5555",
+    "apply_url": "https://www.axisbank.com/home-loan"
+  },
+  {
+    "id": "BANK006",
+    "bank": "Punjab National Bank",
+    "short": "PNB",
+    "logo_color": "#1e5ba1",
+    "scheme_name": "PNB Housing Finance",
+    "scheme_type": "Regular Home Loan",
+    "interest_rate_min": 8.50,
+    "interest_rate_max": 10.25,
+    "max_loan_amount": 50000000,
+    "max_tenure_years": 30,
+    "processing_fee": "0.35% (max ₹15,000)",
+    "ltv_ratio": 90,
+    "prepayment_charge": "Nil for floating rate",
+    "eligibility": {
+      "min_age": 18,
+      "max_age": 70,
+      "min_income_monthly": 20000,
+      "employment": ["Salaried","Self-Employed","Agriculturist","NRI"]
+    },
+    "special_features": [
+      "PNB Pride for government employees (special rate)",
+      "PNB Gen-Next for young professionals",
+      "Balance transfer with top-up",
+      "Flexible EMI holiday for 3 months"
+    ],
+    "government_scheme": false,
+    "contact": "1800-180-2222",
+    "apply_url": "https://www.pnbhousing.com"
+  },
+  {
+    "id": "BANK007",
+    "bank": "Kotak Mahindra Bank",
+    "short": "KOTAK",
+    "logo_color": "#ed1c24",
+    "scheme_name": "Kotak Home Loan",
+    "scheme_type": "Regular Home Loan",
+    "interest_rate_min": 8.70,
+    "interest_rate_max": 9.40,
+    "max_loan_amount": 50000000,
+    "max_tenure_years": 25,
+    "processing_fee": "0.50% + GST",
+    "ltv_ratio": 90,
+    "prepayment_charge": "Nil",
+    "eligibility": {
+      "min_age": 21,
+      "max_age": 65,
+      "min_income_monthly": 40000,
+      "employment": ["Salaried","Self-Employed"]
+    },
+    "special_features": [
+      "Digital end-to-end processing",
+      "Special rate for women applicants",
+      "Loan linked to 811 savings account",
+      "Automatic EMI debit"
+    ],
+    "government_scheme": false,
+    "contact": "1860-266-2666",
+    "apply_url": "https://www.kotak.com/home-loan"
+  },
+  {
+    "id": "BANK008",
+    "bank": "LIC Housing Finance",
+    "short": "LIC HFL",
+    "logo_color": "#006d3a",
+    "scheme_name": "LIC HFL Griha Prakash",
+    "scheme_type": "Affordable Housing Loan",
+    "interest_rate_min": 8.50,
+    "interest_rate_max": 9.90,
+    "max_loan_amount": 15000000,
+    "max_tenure_years": 30,
+    "processing_fee": "0.25% + GST",
+    "ltv_ratio": 90,
+    "prepayment_charge": "Nil for floating rate",
+    "eligibility": {
+      "min_age": 21,
+      "max_age": 70,
+      "min_income_monthly": 15000,
+      "employment": ["Salaried","Self-Employed","Pensioners"]
+    },
+    "special_features": [
+      "Special scheme for LIC policyholders (extra 0.25% off)",
+      "Pension income considered for eligibility",
+      "Griha Varishtha for senior citizens",
+      "Plot + construction loan combined"
+    ],
+    "government_scheme": false,
+    "contact": "1800-258-5678",
+    "apply_url": "https://www.lichousing.com"
+  }
+]
