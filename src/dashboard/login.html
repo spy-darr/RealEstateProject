@@ -6,138 +6,222 @@
 <title>PropSense AI — Sign In</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <style>
-:root{
-  --bg:#07070f;--surface:#0f0f1a;--surface2:#161625;--border:rgba(255,255,255,.08);
-  --accent:#6c47ff;--accent2:#00d4a8;--accent3:#ff6b6b;--gold:#f5c842;
-  --text:#e8e8f2;--muted:#7070a0;--radius:14px;
+:root {
+  --bg:#07070f; --surface:#0f0f1a; --surface2:#161625; --surface3:#1e1e30;
+  --border:rgba(255,255,255,.08); --border2:rgba(255,255,255,.14);
+  --accent:#6c47ff; --accent2:#00d4a8; --accent3:#ff6b6b; --gold:#f5c842;
+  --text:#e8e8f2; --muted:#7070a0;
 }
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
-  display:flex;align-items:center;justify-content:center;overflow:hidden}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* Animated BG */
-.bg-orbs{position:fixed;inset:0;z-index:0;overflow:hidden}
-.orb{position:absolute;border-radius:50%;filter:blur(80px);animation:float 8s ease-in-out infinite}
-.orb1{width:500px;height:500px;background:rgba(108,71,255,.15);top:-200px;left:-100px;animation-delay:0s}
-.orb2{width:400px;height:400px;background:rgba(0,212,168,.1);bottom:-150px;right:-100px;animation-delay:3s}
-.orb3{width:300px;height:300px;background:rgba(245,200,66,.08);top:40%;left:50%;animation-delay:1.5s}
-@keyframes float{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-30px) scale(1.05)}}
+/* KEY FIX: html+body allow scroll, page wrapper handles layout */
+html { height: 100%; }
+body {
+  font-family: "DM Sans", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
 
-/* Grid texture */
-body::before{content:"";position:fixed;inset:0;z-index:0;
-  background-image:linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);
-  background-size:40px 40px}
+/* Fixed decorative background — does NOT block scroll */
+.bg-layer {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+}
+.orb {
+  position: absolute; border-radius: 50%; filter: blur(90px);
+  animation: float 10s ease-in-out infinite;
+}
+.orb1 { width:500px;height:500px;background:rgba(108,71,255,.12);top:-160px;left:-100px;animation-delay:0s; }
+.orb2 { width:400px;height:400px;background:rgba(0,212,168,.09);bottom:-100px;right:-80px;animation-delay:3.5s; }
+.orb3 { width:260px;height:260px;background:rgba(245,200,66,.07);top:42%;left:52%;animation-delay:2s; }
+.grid-tex {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+@keyframes float { 0%,100%{transform:translateY(0) scale(1)} 50%{transform:translateY(-26px) scale(1.04)} }
 
-/* Wrapper */
-.auth-wrap{position:relative;z-index:10;width:100%;max-width:480px;padding:20px}
+/* ── Scrollable page wrapper ── */
+.page {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: flex-start;
+  padding: 48px 20px 64px;
+  min-height: 100vh;
+}
 
-/* Logo top */
-.logo-bar{text-align:center;margin-bottom:32px}
-.logo-icon{width:56px;height:56px;background:linear-gradient(135deg,var(--accent),#8b64ff);
-  border-radius:16px;display:inline-flex;align-items:center;justify-content:center;
-  font-size:1.6rem;margin-bottom:12px;box-shadow:0 8px 32px rgba(108,71,255,.4)}
-.logo-name{font-family:"Syne",sans-serif;font-size:1.5rem;font-weight:800;
-  background:linear-gradient(135deg,#a78bfa,var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.logo-tag{font-size:.75rem;color:var(--muted);margin-top:2px;letter-spacing:.08em;text-transform:uppercase}
+/* ── Logo ── */
+.logo-bar { text-align: center; margin-bottom: 30px; }
+.logo-icon {
+  width: 62px; height: 62px;
+  background: linear-gradient(135deg,var(--accent),#9b6bff);
+  border-radius: 18px; display: inline-flex;
+  align-items: center; justify-content: center;
+  font-size: 1.8rem; margin-bottom: 14px;
+  box-shadow: 0 8px 36px rgba(108,71,255,.45);
+}
+.logo-name {
+  font-family: "Syne",sans-serif; font-size: 1.65rem; font-weight: 800;
+  background: linear-gradient(135deg,#b4a0ff,var(--accent2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.logo-tag { font-size:.72rem; color:var(--muted); letter-spacing:.1em; text-transform:uppercase; margin-top:3px; }
 
-/* Card */
-.auth-card{background:rgba(15,15,26,.85);border:1px solid var(--border);
-  border-radius:20px;padding:36px;backdrop-filter:blur(20px);
-  box-shadow:0 24px 80px rgba(0,0,0,.6)}
+/* ── Auth card ── */
+.auth-card {
+  width: 100%; max-width: 476px;
+  background: rgba(15,15,26,.9);
+  border: 1px solid var(--border2);
+  border-radius: 22px; padding: 32px 30px 26px;
+  backdrop-filter: blur(24px);
+  box-shadow: 0 28px 80px rgba(0,0,0,.6);
+}
 
-/* Tabs */
-.auth-tabs{display:flex;background:var(--surface2);border-radius:12px;padding:4px;margin-bottom:28px}
-.auth-tab{flex:1;text-align:center;padding:10px;border-radius:9px;cursor:pointer;
-  font-family:"Syne",sans-serif;font-size:.85rem;font-weight:600;color:var(--muted);
-  border:none;background:none;transition:all .2s}
-.auth-tab.active{background:var(--surface);color:var(--text);box-shadow:0 2px 10px rgba(0,0,0,.4)}
+/* ── Tabs ── */
+.auth-tabs { display:flex; background:var(--surface2); border-radius:13px; padding:4px; margin-bottom:24px; }
+.auth-tab {
+  flex:1; text-align:center; padding:10px; border-radius:10px; cursor:pointer;
+  font-family:"Syne",sans-serif; font-size:.85rem; font-weight:600; color:var(--muted);
+  border:none; background:none; transition:all .22s;
+}
+.auth-tab.active { background:var(--surface); color:var(--text); box-shadow:0 2px 10px rgba(0,0,0,.4); }
 
-/* Role Selector */
-.role-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:22px}
-.role-btn{background:var(--surface2);border:2px solid var(--border);border-radius:12px;
-  padding:14px 8px;text-align:center;cursor:pointer;transition:all .2s}
-.role-btn:hover{border-color:rgba(108,71,255,.4)}
-.role-btn.selected{border-color:var(--accent);background:rgba(108,71,255,.1)}
-.role-icon{font-size:1.6rem;display:block;margin-bottom:6px}
-.role-label{font-size:.75rem;font-weight:600;color:var(--muted)}
-.role-btn.selected .role-label{color:var(--text)}
+/* ── Role selector ── */
+.role-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:20px; }
+.role-btn {
+  background:var(--surface2); border:2px solid var(--border); border-radius:12px;
+  padding:14px 8px; text-align:center; cursor:pointer; transition:all .2s; user-select:none;
+}
+.role-btn:hover { border-color:rgba(108,71,255,.35); }
+.role-btn.sel   { border-color:var(--accent); background:rgba(108,71,255,.12); }
+.ri { font-size:1.5rem; display:block; margin-bottom:6px; }
+.rl { font-size:.72rem; font-weight:600; color:var(--muted); }
+.role-btn.sel .rl { color:var(--text); }
 
-/* Form */
-.field{margin-bottom:16px}
-.field label{display:block;font-size:.72rem;color:var(--muted);text-transform:uppercase;
-  letter-spacing:.06em;margin-bottom:6px;font-weight:600}
-.field input,.field select{width:100%;background:var(--surface2);border:1px solid var(--border);
-  color:var(--text);padding:12px 16px;border-radius:10px;font-family:inherit;font-size:.9rem;
-  transition:border-color .2s,box-shadow .2s}
-.field input:focus,.field select:focus{outline:none;border-color:var(--accent);
-  box-shadow:0 0 0 3px rgba(108,71,255,.15)}
-.field input::placeholder{color:var(--muted)}
-.field select option{background:var(--surface2)}
+/* ── Form ── */
+.field { margin-bottom:14px; }
+.field label {
+  display:block; font-size:.7rem; color:var(--muted); text-transform:uppercase;
+  letter-spacing:.06em; margin-bottom:6px; font-weight:600;
+}
+.field input, .field select {
+  width:100%; background:var(--surface2); border:1px solid var(--border);
+  color:var(--text); padding:11px 15px; border-radius:10px;
+  font-family:inherit; font-size:.9rem; transition:border-color .2s, box-shadow .2s;
+}
+.field input:focus, .field select:focus {
+  outline:none; border-color:var(--accent); box-shadow:0 0 0 3px rgba(108,71,255,.16);
+}
+.field input::placeholder { color:var(--muted); }
+.field select option { background:var(--surface2); }
+.fc2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
 
-/* Password toggle */
-.pw-wrap{position:relative}
-.pw-wrap input{padding-right:44px}
-.pw-toggle{position:absolute;right:14px;top:50%;transform:translateY(-50%);
-  background:none;border:none;cursor:pointer;color:var(--muted);font-size:1rem}
+/* ── Password eye ── */
+.pw { position:relative; }
+.pw input { padding-right:46px; }
+.eye {
+  position:absolute; right:13px; top:50%; transform:translateY(-50%);
+  background:none; border:none; cursor:pointer; color:var(--muted);
+  font-size:1rem; padding:4px; line-height:1;
+}
+.eye:hover { color:var(--text); }
 
-/* Form grid */
-.form-2col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+/* ── Info box ── */
+.ibox {
+  background:rgba(245,200,66,.07); border:1px solid rgba(245,200,66,.22);
+  border-radius:10px; padding:11px 14px; font-size:.78rem; color:var(--gold);
+  margin-bottom:14px; line-height:1.55;
+}
 
-/* Buttons */
-.btn-full{width:100%;padding:14px;border-radius:12px;border:none;cursor:pointer;
-  font-family:"Syne",sans-serif;font-size:.95rem;font-weight:700;
-  background:linear-gradient(135deg,var(--accent),#8b64ff);color:#fff;
-  box-shadow:0 6px 24px rgba(108,71,255,.4);transition:all .2s;margin-top:6px}
-.btn-full:hover{transform:translateY(-2px);box-shadow:0 10px 32px rgba(108,71,255,.5)}
-.btn-full:disabled{opacity:.6;cursor:not-allowed;transform:none}
+/* ── Submit button ── */
+.btn-full {
+  width:100%; padding:13px; border-radius:11px; border:none; cursor:pointer;
+  font-family:"Syne",sans-serif; font-size:.95rem; font-weight:700;
+  background:linear-gradient(135deg,var(--accent),#9166ff); color:#fff;
+  box-shadow:0 6px 24px rgba(108,71,255,.4); transition:all .22s; margin-top:4px;
+}
+.btn-full:hover  { transform:translateY(-2px); box-shadow:0 10px 32px rgba(108,71,255,.5); }
+.btn-full:active { transform:none; }
+.btn-full:disabled { opacity:.55; cursor:not-allowed; transform:none !important; }
 
-/* Divider */
-.divider{display:flex;align-items:center;gap:12px;margin:18px 0;color:var(--muted);font-size:.8rem}
-.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--border)}
+/* ── Divider ── */
+.divider {
+  display:flex; align-items:center; gap:12px;
+  margin:15px 0; color:var(--muted); font-size:.8rem;
+}
+.divider::before, .divider::after { content:""; flex:1; height:1px; background:var(--border); }
 
-/* Error/Success */
-.msg{padding:12px 16px;border-radius:10px;font-size:.84rem;margin-bottom:16px;display:none}
-.msg.error{background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.3);color:var(--accent3)}
-.msg.success{background:rgba(0,212,168,.1);border:1px solid rgba(0,212,168,.3);color:var(--accent2)}
-.msg.show{display:block;animation:shake .3s ease}
-@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+/* ── Message ── */
+.msg { padding:11px 15px; border-radius:10px; font-size:.83rem; margin-bottom:14px; display:none; line-height:1.55; }
+.msg.err  { background:rgba(255,107,107,.1); border:1px solid rgba(255,107,107,.3); color:var(--accent3); }
+.msg.ok   { background:rgba(0,212,168,.1);  border:1px solid rgba(0,212,168,.3);   color:var(--accent2); }
+.msg.show { display:block; animation:msgIn .3s ease; }
+@keyframes msgIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:none} }
 
-/* Manager code info */
-.info-box{background:rgba(245,200,66,.07);border:1px solid rgba(245,200,66,.2);
-  border-radius:10px;padding:12px 14px;font-size:.78rem;color:var(--gold);margin-bottom:16px}
+/* ── Switch link ── */
+.slink { text-align:center; margin-top:14px; font-size:.81rem; color:var(--muted); }
+.slink a { color:var(--accent); text-decoration:none; font-weight:600; }
+.slink a:hover { text-decoration:underline; }
 
-/* Footer links */
-.auth-footer{text-align:center;margin-top:20px;font-size:.8rem;color:var(--muted)}
-.auth-footer a{color:var(--accent);text-decoration:none}
-.auth-footer a:hover{text-decoration:underline}
+/* ── Demo box ── */
+.demo-box {
+  background:rgba(108,71,255,.08); border:1px solid rgba(108,71,255,.2);
+  border-radius:10px; padding:12px 14px; margin-top:14px;
+  font-size:.77rem; line-height:1.75; color:var(--muted);
+}
+.demo-box strong { color:var(--text); }
+.demo-box code   { background:var(--surface3); padding:1px 6px; border-radius:4px; font-size:.75rem; color:var(--accent2); }
 
-/* Features strip */
-.features-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:20px}
-.feat{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;
-  padding:12px;text-align:center}
-.feat-icon{font-size:1.2rem;margin-bottom:4px}
-.feat-text{font-size:.68rem;color:var(--muted);line-height:1.4}
+/* ── Terms note ── */
+.terms-note { text-align:center; margin-top:12px; font-size:.73rem; color:var(--muted); line-height:1.6; }
 
-/* Loading overlay */
-.loading{display:none;position:fixed;inset:0;background:rgba(7,7,15,.8);
-  z-index:999;align-items:center;justify-content:center;flex-direction:column;gap:12px}
-.loading.show{display:flex}
-.loading-spinner{width:40px;height:40px;border:3px solid var(--border);
-  border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.loading-text{color:var(--muted);font-size:.85rem}
+/* ── Feature strip ── */
+.features { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:18px; max-width:476px; width:100%; }
+.feat {
+  background:rgba(255,255,255,.03); border:1px solid var(--border);
+  border-radius:11px; padding:13px 10px; text-align:center;
+}
+.feat-icon { font-size:1.2rem; margin-bottom:5px; }
+.feat-text { font-size:.68rem; color:var(--muted); line-height:1.45; }
+
+/* ── Loading overlay ── */
+.overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(7,7,15,.82); backdrop-filter:blur(6px);
+  z-index:9999; flex-direction:column;
+  align-items:center; justify-content:center; gap:14px;
+}
+.overlay.show { display:flex; }
+.spin { width:44px;height:44px;border-radius:50%;border:3px solid rgba(255,255,255,.08);border-top-color:var(--accent);animation:spin .8s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg)} }
+.overlay-label { color:var(--muted); font-size:.88rem; }
+
+/* ── Responsive ── */
+@media(max-width:520px) {
+  .auth-card  { padding:24px 18px 22px; }
+  .fc2        { grid-template-columns:1fr; }
+  .features   { grid-template-columns:1fr 1fr; }
+  .page       { padding:32px 16px 52px; }
+}
 </style>
 </head>
 <body>
 
-<div class="bg-orbs">
+<!-- Decorative (fixed, behind everything) -->
+<div class="bg-layer">
   <div class="orb orb1"></div>
   <div class="orb orb2"></div>
   <div class="orb orb3"></div>
 </div>
+<div class="grid-tex"></div>
 
-<div class="auth-wrap">
+<!-- ══════════ SCROLLABLE PAGE ══════════ -->
+<div class="page">
+
   <div class="logo-bar">
     <div class="logo-icon">🏠</div>
     <div class="logo-name">PropSense AI</div>
@@ -145,378 +229,356 @@ body::before{content:"";position:fixed;inset:0;z-index:0;
   </div>
 
   <div class="auth-card">
-    <!-- Tab toggle -->
+
     <div class="auth-tabs">
-      <button class="auth-tab active" onclick="switchTab('login')">Sign In</button>
-      <button class="auth-tab" onclick="switchTab('signup')">Create Account</button>
+      <button class="auth-tab active" id="tab-login"  onclick="switchTab('login')">Sign In</button>
+      <button class="auth-tab"        id="tab-signup" onclick="switchTab('signup')">Create Account</button>
     </div>
 
-    <!-- Error / Success msg -->
-    <div class="msg" id="auth-msg"></div>
+    <div class="msg" id="amsg"></div>
 
-    <!-- ═══ LOGIN FORM ═══ -->
-    <div id="login-form">
-      <!-- Role Selector -->
+    <!-- ══ LOGIN ══ -->
+    <div id="frm-login">
       <div class="role-grid">
-        <div class="role-btn selected" onclick="selectRole('user',this)">
-          <span class="role-icon">👤</span>
-          <span class="role-label">Buyer / User</span>
+        <div class="role-btn sel" id="rb-user"    onclick="setRole('user',this)">
+          <span class="ri">👤</span><span class="rl">Buyer / User</span>
         </div>
-        <div class="role-btn" onclick="selectRole('manager',this)">
-          <span class="role-icon">🏢</span>
-          <span class="role-label">Property Mgr</span>
+        <div class="role-btn"     id="rb-manager" onclick="setRole('manager',this)">
+          <span class="ri">🏢</span><span class="rl">Property Mgr</span>
         </div>
-        <div class="role-btn" onclick="selectRole('admin',this)">
-          <span class="role-icon">👑</span>
-          <span class="role-label">Admin</span>
+        <div class="role-btn"     id="rb-admin"   onclick="setRole('admin',this)">
+          <span class="ri">👑</span><span class="rl">Admin</span>
         </div>
       </div>
 
       <div class="field">
         <label>Username / Email</label>
-        <input type="text" id="login-user" placeholder="Enter your username or email" autocomplete="username"/>
+        <input id="li-user" type="text" placeholder="Enter username or email" autocomplete="username"/>
       </div>
       <div class="field">
         <label>Password</label>
-        <div class="pw-wrap">
-          <input type="password" id="login-pass" placeholder="Enter password" autocomplete="current-password"/>
-          <button class="pw-toggle" onclick="togglePw('login-pass',this)" tabindex="-1">👁</button>
+        <div class="pw">
+          <input id="li-pass" type="password" placeholder="Enter password" autocomplete="current-password"/>
+          <button class="eye" type="button" onclick="eyeTog('li-pass',this)">👁</button>
         </div>
       </div>
 
-      <div id="manager-info" class="info-box" style="display:none">
-        🏢 Property Manager login — use your assigned username &amp; password provided during onboarding.
+      <div id="ib-mgr" class="ibox" style="display:none">
+        🏢 Property Manager — use the username &amp; password given during onboarding.
       </div>
-      <div id="admin-info" class="info-box" style="display:none">
-        👑 Admin login — use credentials set during initial project setup.
+      <div id="ib-adm" class="ibox" style="display:none">
+        👑 Admin — credentials are in <code>data/auth_config.json</code>.
       </div>
 
-      <button class="btn-full" onclick="doLogin()">Sign In →</button>
+      <button class="btn-full" id="btn-login" onclick="doLogin()">Sign In →</button>
 
       <div class="divider">or</div>
-      <div style="text-align:center;font-size:.82rem;color:var(--muted)">
-        New here? <a href="#" onclick="switchTab('signup')" style="color:var(--accent)">Create a free account</a>
+      <div class="slink">New here? <a href="#" onclick="switchTab('signup');return false">Create a free account</a></div>
+
+      <div class="demo-box">
+        <strong>Demo logins —</strong><br>
+        Admin role: <code>admin</code> / <code>Admin@2024</code><br>
+        Property Mgr: <code>mgr_koregaon</code> / <code>Prop@001</code><br>
+        Or create a new <strong>buyer account</strong> using the tab above.
       </div>
     </div>
 
-    <!-- ═══ SIGNUP FORM ═══ -->
-    <div id="signup-form" style="display:none">
-      <div class="form-2col">
-        <div class="field">
-          <label>First Name *</label>
-          <input type="text" id="su-fname" placeholder="Raj"/>
-        </div>
-        <div class="field">
-          <label>Last Name *</label>
-          <input type="text" id="su-lname" placeholder="Sharma"/>
-        </div>
+    <!-- ══ SIGNUP ══ -->
+    <div id="frm-signup" style="display:none">
+      <div class="fc2">
+        <div class="field"><label>First Name *</label><input id="su-fn" type="text" placeholder="Raj" autocomplete="given-name"/></div>
+        <div class="field"><label>Last Name *</label><input id="su-ln" type="text" placeholder="Sharma" autocomplete="family-name"/></div>
       </div>
       <div class="field">
         <label>Email Address *</label>
-        <input type="email" id="su-email" placeholder="raj@example.com"/>
+        <input id="su-em" type="email" placeholder="raj@example.com" autocomplete="email"/>
       </div>
       <div class="field">
         <label>Phone Number</label>
-        <input type="tel" id="su-phone" placeholder="+91 98765 43210"/>
+        <input id="su-ph" type="tel" placeholder="+91 98765 43210" autocomplete="tel"/>
+      </div>
+      <div class="fc2">
+        <div class="field">
+          <label>Your City</label>
+          <select id="su-ct">
+            <option value="">Select city</option>
+            <option>Mumbai</option><option>Pune</option><option>Bangalore</option>
+            <option>Hyderabad</option><option>Chennai</option><option>Delhi</option>
+            <option>Kolkata</option><option>Ahmedabad</option><option>Jaipur</option>
+            <option>Surat</option><option>Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Looking For</label>
+          <select id="su-in">
+            <option value="">Select intent</option>
+            <option value="buy">Buy — Self Use</option>
+            <option value="invest">Buy — Investment</option>
+            <option value="rent">Rent</option>
+            <option value="just_browsing">Just Browsing</option>
+          </select>
+        </div>
       </div>
       <div class="field">
-        <label>City / Location</label>
-        <select id="su-city">
-          <option value="">-- Select your city --</option>
-          <option>Mumbai</option><option>Pune</option><option>Bangalore</option>
-          <option>Hyderabad</option><option>Chennai</option><option>Delhi</option>
-          <option>Kolkata</option><option>Ahmedabad</option><option>Jaipur</option>
-          <option>Surat</option><option>Other</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Property Budget (₹)</label>
-        <select id="su-budget">
-          <option value="">-- Select range --</option>
+        <label>Property Budget</label>
+        <select id="su-bg">
+          <option value="">Select budget range</option>
           <option value="0-2500000">Under ₹25 Lakhs</option>
-          <option value="2500000-5000000">₹25L – ₹50L</option>
-          <option value="5000000-10000000">₹50L – ₹1 Cr</option>
-          <option value="10000000-20000000">₹1 Cr – ₹2 Cr</option>
-          <option value="20000000-50000000">₹2 Cr – ₹5 Cr</option>
-          <option value="50000000+">₹5 Cr+</option>
+          <option value="2500000-5000000">₹25 L – ₹50 L</option>
+          <option value="5000000-10000000">₹50 L – ₹1 Crore</option>
+          <option value="10000000-20000000">₹1 Crore – ₹2 Crore</option>
+          <option value="20000000-50000000">₹2 Crore – ₹5 Crore</option>
+          <option value="50000000+">₹5 Crore+</option>
         </select>
       </div>
       <div class="field">
-        <label>Looking For</label>
-        <select id="su-intent">
-          <option value="">-- Select intent --</option>
-          <option value="buy">Buy — Self Use</option>
-          <option value="invest">Buy — Investment</option>
-          <option value="rent">Rent</option>
-          <option value="just_browsing">Just Browsing</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Create Password *</label>
-        <div class="pw-wrap">
-          <input type="password" id="su-pass" placeholder="Min 6 characters"/>
-          <button class="pw-toggle" onclick="togglePw('su-pass',this)" tabindex="-1">👁</button>
+        <label>Password * <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:.75rem">(min 6 characters)</span></label>
+        <div class="pw">
+          <input id="su-pw" type="password" placeholder="Choose a strong password" autocomplete="new-password"/>
+          <button class="eye" type="button" onclick="eyeTog('su-pw',this)">👁</button>
         </div>
       </div>
 
-      <button class="btn-full" onclick="doSignup()">Create Account &amp; Continue →</button>
+      <button class="btn-full" id="btn-signup" onclick="doSignup()">Create Account &amp; Continue →</button>
 
-      <div style="text-align:center;margin-top:14px;font-size:.78rem;color:var(--muted)">
-        By signing up you agree to our Terms of Service. Your data is used only to personalise your property search.
+      <div class="terms-note">
+        By signing up you agree to our Terms of Service.<br>
+        Your data is only used to personalise your property search.
       </div>
+      <div class="slink">Already have an account? <a href="#" onclick="switchTab('login');return false">Sign In</a></div>
     </div>
-  </div>
 
-  <div class="features-strip">
+  </div><!-- auth-card -->
+
+  <div class="features">
     <div class="feat"><div class="feat-icon">🤖</div><div class="feat-text">AI Price Prediction</div></div>
     <div class="feat"><div class="feat-icon">📊</div><div class="feat-text">Investment Analytics</div></div>
     <div class="feat"><div class="feat-icon">🏦</div><div class="feat-text">Loan Comparison</div></div>
+    <div class="feat"><div class="feat-icon">🔍</div><div class="feat-text">Smart Recommendations</div></div>
+    <div class="feat"><div class="feat-icon">🏠</div><div class="feat-text">12 Premium Listings</div></div>
+    <div class="feat"><div class="feat-icon">📈</div><div class="feat-text">Market Heatmap</div></div>
   </div>
-</div>
+
+</div><!-- page -->
 
 <!-- Loading overlay -->
-<div class="loading" id="loading">
-  <div class="loading-spinner"></div>
-  <div class="loading-text" id="loading-text">Signing you in…</div>
+<div class="overlay" id="overlay">
+  <div class="spin"></div>
+  <div class="overlay-label" id="ov-text">Loading…</div>
 </div>
 
 <script>
-/* ════════════════════════════════════════════
-   STATE
-════════════════════════════════════════════ */
-let selectedRole = "user";
-let AUTH_CONFIG  = null;
+/* ═══ STATE ═══ */
+let role = "user";
+let CFG  = null;
 
-/* ════════════════════════════════════════════
-   LOAD AUTH CONFIG
-════════════════════════════════════════════ */
-async function loadConfig() {
+/* ═══ BOOT ═══ */
+(function init() {
+  // Check existing valid session
   try {
-    const r = await fetch("data/auth_config.json");
-    AUTH_CONFIG = await r.json();
-  } catch(e) {
-    // fallback config
-    AUTH_CONFIG = {
-      admin: { username:"admin", password:"Admin@2024", name:"Admin", email:"admin@propsense.ai" },
-      property_managers: [],
-      settings: { allow_user_registration: true }
-    };
-  }
+    const raw = localStorage.getItem("ps_session");
+    if (raw) {
+      const s = JSON.parse(raw);
+      const hrs = (Date.now() - new Date(s.session_start)) / 3600000;
+      if (hrs < 24) { redirect(s.role); return; }
+      localStorage.removeItem("ps_session");
+    }
+  } catch(e) { localStorage.removeItem("ps_session"); }
+
+  // Load config
+  fetch("data/auth_config.json")
+    .then(r => r.json())
+    .then(d => { CFG = d; })
+    .catch(() => {
+      CFG = {
+        admin: { username:"admin", password:"Admin@2024", name:"Admin", email:"admin@propsense.ai" },
+        property_managers: [],
+        settings: {}
+      };
+    });
+})();
+
+function redirect(r) {
+  if (r === "admin")   window.location.replace("admin.html");
+  else if (r === "manager") window.location.replace("property-manager.html");
+  else window.location.replace("index.html");
 }
 
-/* ════════════════════════════════════════════
-   TABS
-════════════════════════════════════════════ */
-function switchTab(tab) {
-  document.querySelectorAll(".auth-tab").forEach(t => t.classList.remove("active"));
-  document.querySelector(`.auth-tab:nth-child(${tab==="login"?1:2})`).classList.add("active");
-  document.getElementById("login-form").style.display  = tab==="login"  ? "block" : "none";
-  document.getElementById("signup-form").style.display = tab==="signup" ? "block" : "none";
+/* ═══ TABS ═══ */
+function switchTab(t) {
+  document.getElementById("tab-login").classList.toggle("active",  t === "login");
+  document.getElementById("tab-signup").classList.toggle("active", t === "signup");
+  document.getElementById("frm-login").style.display  = t === "login"  ? "block" : "none";
+  document.getElementById("frm-signup").style.display = t === "signup" ? "block" : "none";
   clearMsg();
 }
 
-/* ════════════════════════════════════════════
-   ROLE SELECTION
-════════════════════════════════════════════ */
-function selectRole(role, el) {
-  selectedRole = role;
-  document.querySelectorAll(".role-btn").forEach(b => b.classList.remove("selected"));
-  el.classList.add("selected");
-  document.getElementById("manager-info").style.display = role==="manager" ? "block" : "none";
-  document.getElementById("admin-info").style.display   = role==="admin"   ? "block" : "none";
+/* ═══ ROLE ═══ */
+function setRole(r, el) {
+  role = r;
+  ["rb-user","rb-manager","rb-admin"].forEach(id => document.getElementById(id).classList.remove("sel"));
+  el.classList.add("sel");
+  document.getElementById("ib-mgr").style.display = r === "manager" ? "block" : "none";
+  document.getElementById("ib-adm").style.display = r === "admin"   ? "block" : "none";
   clearMsg();
 }
 
-/* ════════════════════════════════════════════
-   LOGIN
-════════════════════════════════════════════ */
-async function doLogin() {
-  const username = document.getElementById("login-user").value.trim();
-  const password = document.getElementById("login-pass").value;
-
-  if (!username || !password) { showMsg("Please enter username and password.", "error"); return; }
-
-  showLoading("Signing you in…");
-
-  await delay(600);
-
-  if (selectedRole === "admin") {
-    const a = AUTH_CONFIG.admin;
-    if ((username === a.username || username === a.email) && password === a.password) {
-      saveSession({ role:"admin", name:a.name, username:a.username, email:a.email });
-      logEvent("admin_login", { username });
-      showLoading("Welcome, Admin! Loading dashboard…");
-      await delay(800);
-      window.location.href = "admin.html";
-      return;
-    }
-    hideLoading(); showMsg("Invalid admin credentials.", "error"); return;
-  }
-
-  if (selectedRole === "manager") {
-    const pm = (AUTH_CONFIG.property_managers||[]).find(
-      m => (m.username === username || m.email === username) && m.password === password
-    );
-    if (pm) {
-      saveSession({ role:"manager", name:pm.name, username:pm.username, email:pm.email,
-        property_id:pm.property_id, manager_id:pm.id, property_title:pm.property_title });
-      logEvent("manager_login", { username, property_id:pm.property_id });
-      showLoading("Welcome! Loading property panel…");
-      await delay(800);
-      window.location.href = "property-manager.html";
-      return;
-    }
-    hideLoading(); showMsg("Invalid property manager credentials.", "error"); return;
-  }
-
-  // Regular user login
-  const users = getUsers();
-  const user = users.find(u => (u.email === username || u.username === username) && u.password === password);
-  if (user) {
-    saveSession({ role:"user", ...user });
-    // Update last login
-    const idx = users.findIndex(u=>u.id===user.id);
-    users[idx].last_login = new Date().toISOString();
-    users[idx].login_count = (users[idx].login_count||0) + 1;
-    saveUsers(users);
-    logEvent("user_login", { user_id:user.id, name:user.name });
-    showLoading(`Welcome back, ${user.fname}!`);
-    await delay(800);
-    window.location.href = "index.html";
-    return;
-  }
-
-  hideLoading();
-  showMsg("Invalid username or password. Please try again.", "error");
+/* ═══ PASSWORD TOGGLE ═══ */
+function eyeTog(id, btn) {
+  const el = document.getElementById(id);
+  const hidden = el.type === "password";
+  el.type = hidden ? "text" : "password";
+  btn.textContent = hidden ? "🙈" : "👁";
 }
 
-/* ════════════════════════════════════════════
-   SIGNUP
-════════════════════════════════════════════ */
-async function doSignup() {
-  const fname  = document.getElementById("su-fname").value.trim();
-  const lname  = document.getElementById("su-lname").value.trim();
-  const email  = document.getElementById("su-email").value.trim();
-  const phone  = document.getElementById("su-phone").value.trim();
-  const city   = document.getElementById("su-city").value;
-  const budget = document.getElementById("su-budget").value;
-  const intent = document.getElementById("su-intent").value;
-  const pass   = document.getElementById("su-pass").value;
-
-  if (!fname || !lname || !email || !pass) { showMsg("Please fill in all required fields (*)", "error"); return; }
-  if (pass.length < 6) { showMsg("Password must be at least 6 characters.", "error"); return; }
-  if (!email.includes("@")) { showMsg("Please enter a valid email address.", "error"); return; }
-
-  const users = getUsers();
-  if (users.find(u => u.email === email)) { showMsg("An account with this email already exists. Please sign in.", "error"); return; }
-
-  showLoading("Creating your account…");
-  await delay(700);
-
-  const newUser = {
-    id:         "USR" + Date.now(),
-    fname, lname,
-    name:       `${fname} ${lname}`,
-    username:   email,
-    email, phone, city, budget, intent, password: pass,
-    role:       "user",
-    created_at: new Date().toISOString(),
-    last_login: new Date().toISOString(),
-    login_count: 1,
-    activity:   [],
-    viewed_properties: [],
-    shortlisted: [],
-    searches:   []
-  };
-
-  users.push(newUser);
-  saveUsers(users);
-  saveSession({ role:"user", ...newUser });
-  logEvent("user_signup", { user_id:newUser.id, email, city, budget, intent });
-
-  showLoading(`Welcome to PropSense, ${fname}! 🎉`);
-  await delay(900);
-  window.location.href = "index.html";
+/* ═══ MESSAGE ═══ */
+function showMsg(txt, type) {
+  const el = document.getElementById("amsg");
+  el.textContent = txt;
+  el.className = "msg " + type + " show";
+}
+function clearMsg() {
+  document.getElementById("amsg").className = "msg";
 }
 
-/* ════════════════════════════════════════════
-   HELPERS
-════════════════════════════════════════════ */
+/* ═══ LOADING ═══ */
+function load(show, txt) {
+  document.getElementById("ov-text").textContent = txt || "Loading…";
+  document.getElementById("overlay").classList.toggle("show", show);
+  document.getElementById("btn-login").disabled  = !!show;
+  document.getElementById("btn-signup").disabled = !!show;
+}
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* ═══ SESSION ═══ */
 function saveSession(data) {
   data.session_start = new Date().toISOString();
   localStorage.setItem("ps_session", JSON.stringify(data));
 }
-
-function getUsers() {
-  return JSON.parse(localStorage.getItem("ps_users") || "[]");
+function getUsers()     { return JSON.parse(localStorage.getItem("ps_users") || "[]"); }
+function saveUsers(arr) { localStorage.setItem("ps_users", JSON.stringify(arr)); }
+function logEv(type, data) {
+  const ev = JSON.parse(localStorage.getItem("ps_events") || "[]");
+  ev.push({ type, data, timestamp: new Date().toISOString() });
+  localStorage.setItem("ps_events", JSON.stringify(ev));
 }
 
-function saveUsers(users) {
-  localStorage.setItem("ps_users", JSON.stringify(users));
-}
+/* ═══ LOGIN ═══ */
+async function doLogin() {
+  const user = document.getElementById("li-user").value.trim();
+  const pass = document.getElementById("li-pass").value;
+  if (!user || !pass) { showMsg("Please enter your username and password.", "err"); return; }
 
-function logEvent(type, data) {
-  const events = JSON.parse(localStorage.getItem("ps_events") || "[]");
-  events.push({ type, data, timestamp: new Date().toISOString() });
-  localStorage.setItem("ps_events", JSON.stringify(events));
-}
+  load(true, "Signing you in…");
+  await sleep(500);
 
-function togglePw(id, btn) {
-  const el = document.getElementById(id);
-  el.type = el.type === "password" ? "text" : "password";
-  btn.textContent = el.type === "password" ? "👁" : "🙈";
-}
-
-function showMsg(msg, type) {
-  const el = document.getElementById("auth-msg");
-  el.textContent = msg; el.className = `msg ${type} show`;
-}
-
-function clearMsg() {
-  const el = document.getElementById("auth-msg");
-  el.className = "msg";
-}
-
-function showLoading(text="Loading…") {
-  document.getElementById("loading-text").textContent = text;
-  document.getElementById("loading").classList.add("show");
-}
-
-function hideLoading() {
-  document.getElementById("loading").classList.remove("show");
-}
-
-function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-/* ════════════════════════════════════════════
-   ENTER KEY
-════════════════════════════════════════════ */
-document.addEventListener("keydown", e => {
-  if (e.key === "Enter") {
-    if (document.getElementById("login-form").style.display !== "none") doLogin();
-    else doSignup();
+  if (role === "admin") {
+    const a = CFG?.admin || {};
+    if ((user === a.username || user === a.email) && pass === a.password) {
+      saveSession({ role:"admin", name:a.name, username:a.username, email:a.email });
+      logEv("admin_login", { username:user });
+      load(true, "Welcome, Admin! Loading panel…");
+      await sleep(700);
+      redirect("admin"); return;
+    }
+    load(false);
+    showMsg("❌  Invalid admin credentials.", "err"); return;
   }
+
+  if (role === "manager") {
+    const pm = (CFG?.property_managers || []).find(
+      m => (m.username === user || m.email === user) && m.password === pass
+    );
+    if (pm) {
+      saveSession({ role:"manager", name:pm.name, username:pm.username,
+        email:pm.email, property_id:pm.property_id, manager_id:pm.id,
+        property_title:pm.property_title });
+      logEv("manager_login", { username:user, property_id:pm.property_id });
+      load(true, `Welcome, ${pm.name}!`);
+      await sleep(700);
+      redirect("manager"); return;
+    }
+    load(false);
+    showMsg("❌  Invalid property manager credentials.", "err"); return;
+  }
+
+  // User login
+  const users = getUsers();
+  const found = users.find(u =>
+    (u.email === user || u.username === user) && u.password === pass
+  );
+  if (found) {
+    const idx = users.findIndex(u => u.id === found.id);
+    users[idx].last_login  = new Date().toISOString();
+    users[idx].login_count = (users[idx].login_count || 0) + 1;
+    saveUsers(users);
+    saveSession({ role:"user", ...users[idx] });
+    logEv("user_login", { user_id:found.id });
+    load(true, `Welcome back, ${found.fname || found.name}! 👋`);
+    await sleep(700);
+    redirect("user"); return;
+  }
+
+  load(false);
+  showMsg("❌  Username or password incorrect. Please try again.", "err");
+}
+
+/* ═══ SIGNUP ═══ */
+async function doSignup() {
+  const fn = document.getElementById("su-fn").value.trim();
+  const ln = document.getElementById("su-ln").value.trim();
+  const em = document.getElementById("su-em").value.trim().toLowerCase();
+  const ph = document.getElementById("su-ph").value.trim();
+  const ct = document.getElementById("su-ct").value;
+  const it = document.getElementById("su-in").value;
+  const bg = document.getElementById("su-bg").value;
+  const pw = document.getElementById("su-pw").value;
+
+  if (!fn || !ln) { showMsg("Please enter your first and last name.", "err"); return; }
+  if (!em || !em.includes("@")) { showMsg("Please enter a valid email address.", "err"); return; }
+  if (!pw || pw.length < 6)     { showMsg("Password must be at least 6 characters.", "err"); return; }
+
+  const users = getUsers();
+  if (users.find(u => u.email === em)) {
+    showMsg("An account with this email already exists. Please sign in.", "err"); return;
+  }
+
+  load(true, "Creating your account…");
+  await sleep(600);
+
+  const nu = {
+    id:           "USR" + Date.now(),
+    fname: fn, lname: ln,
+    name:         `${fn} ${ln}`,
+    username:     em, email: em, phone: ph,
+    city: ct, intent: it, budget: bg,
+    password:     pw, role: "user",
+    created_at:   new Date().toISOString(),
+    last_login:   new Date().toISOString(),
+    login_count:  1,
+    activity:     [],
+    viewed_properties: [],
+    shortlisted:  [],
+    searches:     []
+  };
+
+  users.push(nu);
+  saveUsers(users);
+  saveSession({ role:"user", ...nu });
+  logEv("user_signup", { user_id:nu.id, email:em, city:ct, budget:bg, intent:it });
+
+  load(true, `Welcome to PropSense, ${fn}! 🎉`);
+  await sleep(900);
+  redirect("user");
+}
+
+/* ═══ ENTER KEY ═══ */
+document.addEventListener("keydown", e => {
+  if (e.key !== "Enter") return;
+  if (document.getElementById("frm-signup").style.display !== "none") doSignup();
+  else doLogin();
 });
-
-/* ════════════════════════════════════════════
-   CHECK IF ALREADY LOGGED IN
-════════════════════════════════════════════ */
-(function checkSession() {
-  const s = localStorage.getItem("ps_session");
-  if (!s) return;
-  const sess = JSON.parse(s);
-  // Check session not expired (24 hours)
-  const start = new Date(sess.session_start);
-  const now   = new Date();
-  const hours = (now - start) / 3600000;
-  if (hours > 24) { localStorage.removeItem("ps_session"); return; }
-  // Redirect based on role
-  if (sess.role === "admin")   { window.location.href = "admin.html"; return; }
-  if (sess.role === "manager") { window.location.href = "property-manager.html"; return; }
-  if (sess.role === "user")    { window.location.href = "index.html"; return; }
-})();
-
-loadConfig();
 </script>
 </body>
 </html>
