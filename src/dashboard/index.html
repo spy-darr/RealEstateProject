@@ -1,6 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script>
+(function(){
+  const s=localStorage.getItem("ps_session");
+  if(!s){window.location.replace("login.html");return;}
+  const sess=JSON.parse(s);
+  if(sess.role==="admin"){window.location.replace("admin.html");return;}
+  if(sess.role==="manager"){window.location.replace("property-manager.html");return;}
+  const hours=(Date.now()-new Date(sess.session_start))/3600000;
+  if(hours>24){localStorage.removeItem("ps_session");window.location.replace("login.html");return;}
+  window.__PS_SESSION=sess;
+})();
+</script>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>PropSense AI — Real Estate Analytics Platform</title>
@@ -308,9 +320,36 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
 @media(max-width:1200px){.stats-grid{grid-template-columns:repeat(2,1fr)}.form-row{grid-template-columns:1fr 1fr}}
 @media(max-width:900px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr}.modal-specs{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:768px){.sidebar{display:none}.main{margin-left:0}.page-wrap{padding:18px 14px}}
+
+/* ══ USER BAR ══ */
+.user-topbar{position:fixed;top:0;left:248px;right:0;height:48px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:12px;z-index:150}
+.user-topbar .welcome{font-size:.82rem;color:var(--muted)}
+.user-topbar .welcome strong{color:var(--text)}
+.user-topbar .ml{margin-left:auto;display:flex;align-items:center;gap:10px}
+.user-chip2{background:linear-gradient(135deg,rgba(108,71,255,.2),rgba(0,212,168,.1));border:1px solid rgba(108,71,255,.3);border-radius:20px;padding:5px 14px;font-size:.78rem;display:flex;align-items:center;gap:6px;font-weight:500}
+.user-dot{width:7px;height:7px;background:var(--accent2);border-radius:50%}
+.ua-btn{background:none;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 12px;font-size:.75rem;cursor:pointer;font-family:inherit;transition:all .2s}
+.ua-btn:hover{color:var(--text);border-color:var(--border2)}
+.page-wrap{padding-top:36px}
+@media(max-width:768px){.user-topbar{left:0}}
+
 </style>
+<style>.main { margin-left:248px; padding-top: 60px !important; }</style>
 </head>
 <body>
+
+<!-- USER TOPBAR -->
+<div class="user-topbar" id="user-topbar">
+  <div class="welcome">Welcome back, <strong id="utb-name">User</strong></div>
+  <div class="ml">
+    <span id="utb-city" style="font-size:.75rem;color:var(--muted)"></span>
+    <span id="utb-budget" style="font-size:.75rem;color:var(--muted)"></span>
+    <div class="user-chip2"><div class="user-dot"></div><span id="utb-email">user</span></div>
+    <button class="ua-btn" onclick="shortlistPanel()">❤️ Saved (<span id="utb-saves">0</span>)</button>
+    <button class="ua-btn" onclick="doLogout()">🚪 Sign Out</button>
+  </div>
+</div>
+
 
 <!-- ══════════ ADMIN LOGIN SCREEN ══════════ -->
 <div id="admin-login-wrap" class="admin-login-wrap" style="display:none">
@@ -780,6 +819,91 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
 /* ═══════════════════════════════════════════════════
    GLOBAL STATE
 ═══════════════════════════════════════════════════ */
+
+/* ════════════════════════════════════════
+   USER SESSION & ACTIVITY TRACKING
+════════════════════════════════════════ */
+const PS_SESSION = window.__PS_SESSION || {};
+const PS_USER_ID = PS_SESSION.id || PS_SESSION.username || null;
+
+function trackEvent(type, data={}) {
+  try {
+    const events = JSON.parse(localStorage.getItem("ps_events")||"[]");
+    events.push({ type, data:{ user_id:PS_USER_ID, name:PS_SESSION.name||PS_SESSION.fname, ...data }, timestamp:new Date().toISOString() });
+    if (events.length > 500) events.splice(0, events.length - 500);
+    localStorage.setItem("ps_events", JSON.stringify(events));
+    if (PS_USER_ID) updateUserRecord(type, data);
+  } catch(e) {}
+}
+
+function updateUserRecord(type, data) {
+  try {
+    const users = JSON.parse(localStorage.getItem("ps_users")||"[]");
+    const idx = users.findIndex(u=>u.id===PS_USER_ID);
+    if (idx < 0) return;
+    const u = users[idx];
+    if (!u.activity) u.activity = [];
+    u.activity.unshift({ type, data, ts: new Date().toISOString() });
+    u.activity = u.activity.slice(0,100);
+    if (type==="property_view" && data.prop_id) {
+      if (!u.viewed_properties) u.viewed_properties = [];
+      if (!u.viewed_properties.includes(data.prop_id)) u.viewed_properties.push(data.prop_id);
+    }
+    if (type==="search") { u.searches = u.searches||[]; u.searches.unshift(data); u.searches = u.searches.slice(0,50); }
+    if (type==="shortlist") { u.shortlisted = u.shortlisted||[]; if (!u.shortlisted.includes(data.prop_id)) u.shortlisted.push(data.prop_id); }
+    users[idx] = u;
+    localStorage.setItem("ps_users", JSON.stringify(users));
+  } catch(e) {}
+}
+
+function initUserBar() {
+  const fname = PS_SESSION.fname || PS_SESSION.name || "User";
+  const el_name   = document.getElementById("utb-name");
+  const el_email  = document.getElementById("utb-email");
+  const el_city   = document.getElementById("utb-city");
+  const el_budget = document.getElementById("utb-budget");
+  if (el_name)   el_name.textContent   = fname;
+  if (el_email)  el_email.textContent  = PS_SESSION.email || PS_SESSION.username || "";
+  if (el_city && PS_SESSION.city)   el_city.textContent   = "📍 " + PS_SESSION.city;
+  if (el_budget && PS_SESSION.budget) el_budget.textContent = "💰 " + fmtBudgetLabel(PS_SESSION.budget);
+  // refresh save count
+  const users = JSON.parse(localStorage.getItem("ps_users")||"[]");
+  const u = users.find(x=>x.id===PS_USER_ID);
+  const cnt = (u?.shortlisted||[]).length;
+  const el_saves = document.getElementById("utb-saves");
+  if (el_saves) el_saves.textContent = cnt;
+}
+
+function fmtBudgetLabel(b) {
+  const m={"0-2500000":"<₹25L","2500000-5000000":"₹25-50L","5000000-10000000":"₹50L-1Cr","10000000-20000000":"₹1-2Cr","20000000-50000000":"₹2-5Cr","50000000+":"₹5Cr+"};
+  return m[b]||"";
+}
+
+function doLogout() {
+  trackEvent("user_logout",{});
+  localStorage.removeItem("ps_session");
+  window.location.href = "login.html";
+}
+
+function shortlistProperty(id, title) {
+  trackEvent("shortlist",{prop_id:id, title:title});
+  const users = JSON.parse(localStorage.getItem("ps_users")||"[]");
+  const u = users.find(x=>x.id===PS_USER_ID);
+  const cnt = (u?.shortlisted||[]).length;
+  const el = document.getElementById("utb-saves");
+  if (el) el.textContent = cnt;
+  showToast("❤️ Added to shortlist!","success");
+}
+
+function shortlistPanel() {
+  const users = JSON.parse(localStorage.getItem("ps_users")||"[]");
+  const u = users.find(x=>x.id===PS_USER_ID);
+  const saved = u?.shortlisted||[];
+  if (!saved.length) { showToast("No properties shortlisted yet. Click ❤️ on any property!","error"); return; }
+  const names = saved.map((id,i)=>{ const p=(PROPS||[]).find(x=>x.id===id); return `${i+1}. ${p?p.title:id}`; }).join("\n");
+  alert("Your Shortlisted Properties:\n\n" + names);
+}
+
 let PROPS = [], BANKS = [], LEADS = [];
 let IS_ADMIN = false;
 const ADMIN_CREDS = { username: "admin", password: "admin123" };
@@ -813,6 +937,7 @@ async function loadData(){
 
   renderListings(PROPS);
   renderBanks(BANKS);
+  initUserBar();
   renderDataTable();
   initDashboard();
   initMarket();

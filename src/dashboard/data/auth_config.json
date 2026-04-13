@@ -1,83 +1,125 @@
 {
+  "_comment": "ONBOARDING CONFIG — Edit this file to set admin and property manager credentials before deployment",
   "admin": {
     "username": "admin",
-    "password": "Admin@PropSense123",
-    "name": "PropSense Administrator",
-    "email": "admin@propsense.ai",
-    "phone": "+91-9876543210",
-    "company": "PropSense Realty Pvt. Ltd.",
-    "setup_date": "2025-01-01",
-    "logo_text": "PropSense AI"
+    "password": "Admin@2024",
+    "name": "Admin",
+    "email": "admin@propsense.ai"
   },
   "property_managers": [
     {
       "id": "PM001",
-      "username": "manager_prop001",
-      "password": "Prop001@Mgr",
-      "name": "Raj Sharma",
-      "email": "raj@koregaonpark.com",
-      "phone": "+91-9811223344",
-      "property_ids": ["PROP001"],
-      "role": "property_manager"
+      "property_id": "PROP001",
+      "username": "mgr_koregaon",
+      "password": "Prop@001",
+      "name": "Rajesh Sharma",
+      "property_title": "Luxury 3BHK Apartment with Pool View",
+      "email": "rajesh@godrej.com"
     },
     {
       "id": "PM002",
-      "username": "manager_prop002",
-      "password": "Prop002@Mgr",
-      "name": "Priya Patel",
-      "email": "priya@banerrealty.com",
-      "phone": "+91-9822334455",
-      "property_ids": ["PROP002"],
-      "role": "property_manager"
+      "property_id": "PROP002",
+      "username": "mgr_baner",
+      "password": "Prop@002",
+      "name": "Priya Patil",
+      "property_title": "Premium 4BHK Villa with Private Garden",
+      "email": "priya@koltepatil.com"
     },
     {
       "id": "PM003",
-      "username": "manager_prop003",
-      "password": "Prop003@Mgr",
-      "name": "Amit Kulkarni",
-      "email": "amit@hinjewadi.com",
-      "phone": "+91-9833445566",
-      "property_ids": ["PROP003"],
-      "role": "property_manager"
+      "property_id": "PROP003",
+      "username": "mgr_hinjewadi",
+      "password": "Prop@003",
+      "name": "Amit Kumar",
+      "property_title": "Affordable 2BHK near IT Park",
+      "email": "amit@rohanbuilders.com"
     },
     {
       "id": "PM004",
-      "username": "manager_prop004",
-      "password": "Prop004@Mgr",
-      "name": "Sneha Mehta",
-      "email": "sneha@lodha.com",
-      "phone": "+91-9844556677",
-      "property_ids": ["PROP004"],
-      "role": "property_manager"
+      "property_id": "PROP004",
+      "username": "mgr_worli",
+      "password": "Prop@004",
+      "name": "Sunita Mehta",
+      "property_title": "Sea View Penthouse — Worli",
+      "email": "sunita@lodha.com"
     },
     {
       "id": "PM005",
-      "username": "manager_prop005",
-      "password": "Prop005@Mgr",
-      "name": "Vivek Nair",
-      "email": "vivek@prestige.com",
-      "phone": "+91-9855667788",
-      "property_ids": ["PROP005", "PROP006"],
-      "role": "property_manager"
+      "property_id": "PROP005",
+      "username": "mgr_whitefield",
+      "password": "Prop@005",
+      "name": "Kiran Rao",
+      "property_title": "Modern Studio — IT Corridor Whitefield",
+      "email": "kiran@prestige.com"
     },
     {
       "id": "PM006",
-      "username": "manager_multi",
-      "password": "Multi@Mgr456",
-      "name": "Deepak Joshi",
-      "email": "deepak@propsense.ai",
-      "phone": "+91-9866778899",
-      "property_ids": ["PROP007", "PROP008", "PROP009", "PROP010", "PROP011", "PROP012"],
-      "role": "property_manager"
+      "property_id": "PROP006",
+      "username": "mgr_gachibowli",
+      "password": "Prop@006",
+      "name": "Venkat Reddy",
+      "property_title": "3BHK in Prime Gated Community — Gachibowli",
+      "email": "venkat@myhome.com"
+    },
+    {
+      "id": "PM007",
+      "property_id": "PROP007",
+      "username": "mgr_alipore",
+      "password": "Prop@007",
+      "name": "Debashis Sen",
+      "property_title": "Heritage Bungalow — Alipore Kolkata",
+      "email": "debashis@owner.com"
+    },
+    {
+      "id": "PM008",
+      "property_id": "PROP008",
+      "username": "mgr_jaipur",
+      "password": "Prop@008",
+      "name": "Meena Agarwal",
+      "property_title": "Value 2BHK — Vaishali Nagar Jaipur",
+      "email": "meena@ashiana.com"
+    },
+    {
+      "id": "PM009",
+      "property_id": "PROP009",
+      "username": "mgr_jubilee",
+      "password": "Prop@009",
+      "name": "Srinivas Rao",
+      "property_title": "Smart 3BHK — Jubilee Hills Hyderabad",
+      "email": "srinivas@phoenix.com"
+    },
+    {
+      "id": "PM010",
+      "property_id": "PROP010",
+      "username": "mgr_omr",
+      "password": "Prop@010",
+      "name": "Kavitha Rajan",
+      "property_title": "IT Corridor 2BHK — Chennai OMR",
+      "email": "kavitha@casagrand.com"
+    },
+    {
+      "id": "PM011",
+      "property_id": "PROP011",
+      "username": "mgr_satellite",
+      "password": "Prop@011",
+      "name": "Hardik Shah",
+      "property_title": "Compact Studio — SG Road Ahmedabad",
+      "email": "hardik@pacl.com"
+    },
+    {
+      "id": "PM012",
+      "property_id": "PROP012",
+      "username": "mgr_koramangala",
+      "password": "Prop@012",
+      "name": "Anand Naik",
+      "property_title": "Spacious 3BHK — Koramangala Bangalore",
+      "email": "anand@sobha.com"
     }
   ],
   "settings": {
-    "site_name": "PropSense AI",
-    "allow_public_signup": true,
-    "require_email_verify": false,
+    "app_name": "PropSense AI",
+    "allow_user_registration": true,
     "session_timeout_hours": 24,
-    "max_login_attempts": 5,
-    "currency": "INR",
-    "cities_served": ["Mumbai","Pune","Bangalore","Hyderabad","Chennai","Delhi","Kolkata","Ahmedabad","Jaipur","Surat"]
+    "track_user_activity": true
   }
 }
