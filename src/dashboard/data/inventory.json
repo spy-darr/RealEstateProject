@@ -1,0 +1,92 @@
+{
+  "PROP001": {
+    "property_id": "PROP001",
+    "title": "Luxury 3BHK Apartment with Pool View",
+    "total_units": 24,
+    "tower": "Tower A",
+    "units": [
+      {"unit_no":"A-801","floor":8,"type":"3BHK","area_sqft":1650,"price":12500000,"status":"available","facing":"East","parking":2,"booked_by":null,"booked_date":null,"notes":"Corner unit, best view"},
+      {"unit_no":"A-802","floor":8,"type":"3BHK","area_sqft":1620,"price":12200000,"status":"sold","facing":"West","parking":2,"booked_by":"Arjun Mehta","booked_date":"2024-11-15","notes":""},
+      {"unit_no":"A-901","floor":9,"type":"3BHK","area_sqft":1650,"price":12700000,"status":"available","facing":"East","parking":2,"booked_by":null,"booked_date":null,"notes":""},
+      {"unit_no":"A-902","floor":9,"type":"3BHK","area_sqft":1620,"price":12400000,"status":"booked","facing":"North","parking":1,"booked_by":"Sunita Rao","booked_date":"2025-01-10","notes":"Token amount paid"},
+      {"unit_no":"A-1001","floor":10,"type":"3BHK","area_sqft":1650,"price":12900000,"status":"available","facing":"East","parking":2,"booked_by":null,"booked_date":null,"notes":""},
+      {"unit_no":"A-1002","floor":10,"type":"3BHK","area_sqft":1620,"price":12600000,"status":"available","facing":"West","parking":2,"booked_by":null,"booked_date":null,"notes":""},
+      {"unit_no":"A-1101","floor":11,"type":"3BHK","area_sqft":1650,"price":13100000,"status":"available","facing":"East","parking":2,"booked_by":null,"booked_date":null,"notes":"Premium floor"},
+      {"unit_no":"A-1102","floor":11,"type":"3BHK","area_sqft":1620,"price":12800000,"status":"sold","facing":"North","parking":1,"booked_by":"Kavitha Krishnan","booked_date":"2024-12-20","notes":""}
+    ],
+    "price_history": [
+      {"date":"2024-01-01","price":11500000},
+      {"date":"2024-06-01","price":12000000},
+      {"date":"2025-01-01","price":12500000}
+    ],
+    "amenity_status": {
+      "Swimming Pool": "operational",
+      "Gym": "operational",
+      "Club House": "operational",
+      "Children Play Area": "coming_soon",
+      "Parking": "operational",
+      "Security": "operational"
+    },
+    "last_updated": "2025-01-15",
+    "updated_by": "PM001"
+  },
+  "PROP002": {
+    "property_id": "PROP002",
+    "title": "Premium 4BHK Villa with Private Garden",
+    "total_units": 12,
+    "tower": "Phase 1",
+    "units": [
+      {"unit_no":"V-01","floor":0,"type":"4BHK Villa","area_sqft":2800,"price":22000000,"status":"available","facing":"North-East","parking":3,"booked_by":null,"booked_date":null,"notes":"Corner plot, extra garden"},
+      {"unit_no":"V-02","floor":0,"type":"4BHK Villa","area_sqft":2750,"price":21500000,"status":"booked","facing":"East","parking":2,"booked_by":"Ravi Desai","booked_date":"2025-01-05","notes":"Agreement in progress"},
+      {"unit_no":"V-03","floor":0,"type":"4BHK Villa","area_sqft":2800,"price":22000000,"status":"sold","facing":"South-East","parking":3,"booked_by":"Aditya Sharma","booked_date":"2024-10-30","notes":"Registry done"},
+      {"unit_no":"V-04","floor":0,"type":"4BHK Villa","area_sqft":2750,"price":21500000,"status":"available","facing":"West","parking":2,"booked_by":null,"booked_date":null,"notes":""},
+      {"unit_no":"V-05","floor":0,"type":"4BHK Villa","area_sqft":2800,"price":22200000,"price_sqft":7929,"status":"available","facing":"North","parking":3,"booked_by":null,"booked_date":null,"notes":"Premium corner"},
+      {"unit_no":"V-06","floor":0,"type":"4BHK Villa","area_sqft":2750,"price":21800000,"status":"available","facing":"East","parking":2,"booked_by":null,"booked_date":null,"notes":""}
+    ],
+    "price_history": [
+      {"date":"2024-01-01","price":20000000},
+      {"date":"2024-09-01","price":21000000},
+      {"date":"2025-01-01","price":22000000}
+    ],
+    "amenity_status": {
+      "Garden": "operational",
+      "Parking": "operational",
+      "Security": "operational",
+      "CCTV": "operational",
+      "Children Play Area": "operational",
+      "Power Backup": "operational"
+    },
+    "last_updated": "2025-01-12",
+    "updated_by": "PM002"
+  },
+  "PROP003": {
+    "property_id": "PROP003",
+    "title": "Affordable 2BHK near IT Park",
+    "total_units": 48,
+    "tower": "Tower B & C",
+    "units": [
+      {"unit_no":"B-501","floor":5,"type":"2BHK","area_sqft":980,"price":6800000,"status":"available","facing":"East","parking":1,"booked_by":null,"booked_date":null,"notes":""},
+      {"unit_no":"B-502","floor":5,"type":"2BHK","area_sqft":960,"price":6600000,"status":"sold","facing":"West","parking":1,"booked_by":"Neha Singh","booked_date":"2024-11-05","notes":""},
+      {"unit_no":"B-601","floor":6,"type":"2BHK","area_sqft":980,"price":6900000,"status":"available","facing":"East","parking":1,"booked_by":null,"booked_date":null,"notes":""},
+      {"unit_no":"B-602","floor":6,"type":"2BHK","area_sqft":960,"price":6700000,"status":"booked","facing":"North","parking":1,"booked_by":"Rahul Verma","booked_date":"2025-01-08","notes":"Loan approval pending"},
+      {"unit_no":"C-701","floor":7,"type":"2BHK","area_sqft":980,"price":7000000,"status":"available","facing":"South-East","parking":1,"booked_by":null,"booked_date":null,"notes":"Good view"},
+      {"unit_no":"C-702","floor":7,"type":"2BHK","area_sqft":960,"price":6800000,"status":"available","facing":"West","parking":1,"booked_by":null,"booked_date":null,"notes":""},
+      {"unit_no":"C-801","floor":8,"type":"2BHK","area_sqft":980,"price":7100000,"status":"available","facing":"East","parking":1,"booked_by":null,"booked_date":null,"notes":""},
+      {"unit_no":"C-802","floor":8,"type":"2BHK","area_sqft":960,"price":6900000,"status":"sold","facing":"West","parking":1,"booked_by":"Pooja Nair","booked_date":"2024-12-18","notes":""}
+    ],
+    "price_history": [
+      {"date":"2023-06-01","price":6200000},
+      {"date":"2024-01-01","price":6500000},
+      {"date":"2025-01-01","price":6800000}
+    ],
+    "amenity_status": {
+      "Gym": "operational",
+      "Parking": "operational",
+      "Security": "operational",
+      "Lift": "operational",
+      "Power Backup": "operational"
+    },
+    "last_updated": "2025-01-14",
+    "updated_by": "PM003"
+  }
+}

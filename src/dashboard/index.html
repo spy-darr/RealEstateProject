@@ -1689,6 +1689,220 @@ function getFallbackBanks(){
 }
 
 loadData();
+
+/* ════════════════════════════════════════════════════════
+   AUTH + SESSION TRACKING
+════════════════════════════════════════════════════════ */
+const _SESSION_KEY = "ps_session_v2";
+const _USERS_KEY   = "ps_users_v2";
+
+let _currentUser = null;
+
+function _getSession(){ return JSON.parse(localStorage.getItem(_SESSION_KEY)||"null") }
+function _getUsers(){ return JSON.parse(localStorage.getItem(_USERS_KEY)||"[]") }
+function _saveUsers(u){ localStorage.setItem(_USERS_KEY, JSON.stringify(u)) }
+
+function _initAuth() {
+  const sess = _getSession();
+  if (!sess) {
+    // Not logged in — redirect to login
+    window.location.href = "login.html";
+    return;
+  }
+  _currentUser = sess;
+  _renderUserBar(sess);
+  _updateLastSeen();
+  _trackActivity("login", "Opened platform");
+}
+
+function _renderUserBar(sess) {
+  // Inject a slim top bar
+  const bar = document.createElement("div");
+  bar.id = "_user-topbar";
+  bar.style.cssText = "position:fixed;top:0;left:248px;right:0;height:42px;background:rgba(9,9,15,.92);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:flex-end;padding:0 28px;gap:14px;z-index:500;backdrop-filter:blur(8px)";
+  bar.innerHTML = `
+    <span style="font-size:.75rem;color:#7070a0">📍 ${sess.city||"Set city"}</span>
+    <span style="font-size:.75rem;color:#7070a0">💰 ${_fmtBudgetShort(sess.budget)}</span>
+    <div style="display:flex;align-items:center;gap:8px;padding:5px 12px;background:rgba(108,71,255,.12);border:1px solid rgba(108,71,255,.25);border-radius:8px;cursor:pointer" onclick="_openUserMenu()">
+      <div style="width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,#6c47ff,#00d4a8);display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;color:#fff">${sess.name.charAt(0).toUpperCase()}</div>
+      <span style="font-size:.78rem;font-weight:600;color:#e8e8f2">${sess.name.split(" ")[0]}</span>
+    </div>
+    ${sess.role==="admin" ? `<a href="admin.html" style="font-size:.75rem;color:#f5c842;text-decoration:none;padding:4px 10px;background:rgba(245,200,66,.1);border-radius:6px">👑 Admin</a>` : ""}
+  `;
+  document.body.prepend(bar);
+  // Push main content down
+  document.querySelector(".main").style.paddingTop = "72px";
+}
+
+function _fmtBudgetShort(b){
+  const m={"0-3000000":"<₹30L","3000000-6000000":"₹30-60L","6000000-10000000":"₹60L-1Cr","10000000-20000000":"₹1-2Cr","20000000+":">₹2Cr"};
+  return m[b]||"Budget N/A";
+}
+
+function _openUserMenu() {
+  const existing = document.getElementById("_user-menu");
+  if (existing) { existing.remove(); return; }
+  const menu = document.createElement("div");
+  menu.id = "_user-menu";
+  menu.style.cssText = "position:fixed;top:50px;right:20px;background:#0f0f1a;border:1px solid rgba(255,255,255,.13);border-radius:12px;padding:14px;z-index:600;min-width:220px;box-shadow:0 12px 40px rgba(0,0,0,.6)";
+  menu.innerHTML = `
+    <div style="font-family:Syne,sans-serif;font-size:.9rem;font-weight:700;margin-bottom:4px">${_currentUser.name}</div>
+    <div style="font-size:.72rem;color:#7070a0;margin-bottom:14px">${_currentUser.email}</div>
+    <div style="font-size:.75rem;color:#7070a0;margin-bottom:8px;display:flex;justify-content:space-between"><span>City</span><span style="color:#e8e8f2">${_currentUser.city||"—"}</span></div>
+    <div style="font-size:.75rem;color:#7070a0;margin-bottom:14px;display:flex;justify-content:space-between"><span>Budget</span><span style="color:#e8e8f2">${_fmtBudgetShort(_currentUser.budget)}</span></div>
+    <button onclick="_showProfileEditor()" style="width:100%;background:rgba(108,71,255,.15);border:1px solid rgba(108,71,255,.3);color:#a78bfa;border-radius:8px;padding:8px;font-family:DM Sans,sans-serif;font-size:.8rem;cursor:pointer;margin-bottom:8px">✏️ Edit Profile</button>
+    <button onclick="_doLogout()" style="width:100%;background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.25);color:#ff6b6b;border-radius:8px;padding:8px;font-family:DM Sans,sans-serif;font-size:.8rem;cursor:pointer">⏻ Sign Out</button>
+  `;
+  document.body.appendChild(menu);
+  setTimeout(()=>document.addEventListener("click",function rm(e){if(!menu.contains(e.target)&&!document.getElementById("_user-topbar").contains(e.target)){menu.remove();document.removeEventListener("click",rm)}},100));
+}
+
+function _showProfileEditor(){
+  document.getElementById("_user-menu")?.remove();
+  const modal=document.createElement("div");
+  modal.id="_profile-modal";
+  modal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:700;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)";
+  modal.innerHTML=`<div style="background:#0f0f1a;border:1px solid rgba(255,255,255,.13);border-radius:16px;padding:28px;width:100%;max-width:400px">
+    <div style="font-family:Syne,sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:18px">Edit Your Profile</div>
+    <div style="margin-bottom:12px"><label style="font-size:.7rem;color:#7070a0;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px">Preferred City</label>
+      <select id="_pref-city" style="width:100%;background:#161625;border:1px solid rgba(255,255,255,.07);color:#e8e8f2;padding:9px 12px;border-radius:9px;font-family:inherit;font-size:.87rem;outline:none">
+        ${["Mumbai","Pune","Bangalore","Hyderabad","Chennai","Delhi","Kolkata","Ahmedabad","Jaipur","Surat"].map(c=>`<option value="${c}" ${c===_currentUser.city?"selected":""}>${c}</option>`).join("")}
+      </select>
+    </div>
+    <div style="margin-bottom:18px"><label style="font-size:.7rem;color:#7070a0;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px">Budget Range</label>
+      <select id="_pref-budget" style="width:100%;background:#161625;border:1px solid rgba(255,255,255,.07);color:#e8e8f2;padding:9px 12px;border-radius:9px;font-family:inherit;font-size:.87rem;outline:none">
+        <option value="0-3000000" ${_currentUser.budget==="0-3000000"?"selected":""}>Up to ₹30L</option>
+        <option value="3000000-6000000" ${_currentUser.budget==="3000000-6000000"?"selected":""}>₹30L – ₹60L</option>
+        <option value="6000000-10000000" ${_currentUser.budget==="6000000-10000000"?"selected":""}>₹60L – ₹1Cr</option>
+        <option value="10000000-20000000" ${_currentUser.budget==="10000000-20000000"?"selected":""}>₹1Cr – ₹2Cr</option>
+        <option value="20000000+" ${_currentUser.budget==="20000000+"?"selected":""}>Above ₹2Cr</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button onclick="_saveProfile()" style="flex:1;background:linear-gradient(135deg,#6c47ff,#8b64ff);color:#fff;border:none;border-radius:9px;padding:10px;font-family:Syne,sans-serif;font-size:.85rem;font-weight:700;cursor:pointer">💾 Save</button>
+      <button onclick="document.getElementById('_profile-modal').remove()" style="padding:10px 16px;background:#161625;border:1px solid rgba(255,255,255,.07);color:#e8e8f2;border-radius:9px;font-family:Syne,sans-serif;font-size:.85rem;cursor:pointer">Cancel</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+}
+
+function _saveProfile(){
+  const city   = document.getElementById("_pref-city").value;
+  const budget = document.getElementById("_pref-budget").value;
+  const users  = _getUsers();
+  const idx    = users.findIndex(u=>u.id===_currentUser.id);
+  if(idx>=0){ users[idx].city=city; users[idx].budget=budget; _saveUsers(users); }
+  _currentUser.city=city; _currentUser.budget=budget;
+  localStorage.setItem(_SESSION_KEY, JSON.stringify(_currentUser));
+  document.getElementById("_profile-modal")?.remove();
+  // Reload topbar
+  document.getElementById("_user-topbar")?.remove();
+  _renderUserBar(_currentUser);
+  _trackActivity("profile_update","Updated city/budget preferences");
+}
+
+function _updateLastSeen() {
+  const users = _getUsers();
+  const idx   = users.findIndex(u=>u.id===_currentUser.id);
+  if(idx>=0){ users[idx].last_seen=new Date().toISOString(); _saveUsers(users); }
+}
+
+function _trackActivity(type, details, extra) {
+  if (!_currentUser || _currentUser.role !== "user") return;
+  const users = _getUsers();
+  const idx   = users.findIndex(u=>u.id===_currentUser.id);
+  if(idx<0) return;
+  users[idx].activity = users[idx].activity||[];
+  users[idx].activity.push({type, timestamp:new Date().toISOString(), details, ...(extra||{})});
+  users[idx].last_seen = new Date().toISOString();
+  // Cap activity at 200 entries
+  if(users[idx].activity.length > 200) users[idx].activity = users[idx].activity.slice(-200);
+  _saveUsers(users);
+}
+
+function _trackPropertyView(propId, propTitle, city) {
+  if (!_currentUser || _currentUser.role !== "user") return;
+  const users = _getUsers();
+  const idx   = users.findIndex(u=>u.id===_currentUser.id);
+  if(idx<0) return;
+  users[idx].viewed_properties = users[idx].viewed_properties||[];
+  if(!users[idx].viewed_properties.includes(propId)) users[idx].viewed_properties.push(propId);
+  _saveUsers(users);
+  // Update global prop view counter
+  const pv = JSON.parse(localStorage.getItem("ps_prop_views")||"{}");
+  pv[propId] = (pv[propId]||0)+1;
+  localStorage.setItem("ps_prop_views", JSON.stringify(pv));
+  _trackActivity("view", `Viewed: ${propTitle}`, {prop_id:propId, city});
+}
+
+function _trackSearch(filters) {
+  if (!_currentUser || _currentUser.role !== "user") return;
+  const users = _getUsers();
+  const idx   = users.findIndex(u=>u.id===_currentUser.id);
+  if(idx<0) return;
+  users[idx].search_history = users[idx].search_history||[];
+  users[idx].search_history.push({timestamp:new Date().toISOString(),...filters});
+  if(users[idx].search_history.length>50) users[idx].search_history=users[idx].search_history.slice(-50);
+  _saveUsers(users);
+  _trackActivity("search", `Searched: ${JSON.stringify(filters).slice(0,80)}`);
+}
+
+function _trackWishlist(propId, propTitle) {
+  if (!_currentUser || _currentUser.role !== "user") return;
+  const users = _getUsers();
+  const idx   = users.findIndex(u=>u.id===_currentUser.id);
+  if(idx<0) return;
+  users[idx].wishlist = users[idx].wishlist||[];
+  if(!users[idx].wishlist.includes(propId)) {
+    users[idx].wishlist.push(propId);
+    _saveUsers(users);
+    _trackActivity("wishlist", `Wishlisted: ${propTitle}`, {prop_id:propId});
+    showToast("Added to wishlist ★","success");
+  }
+}
+
+function _trackPrediction(city, price) {
+  _trackActivity("prediction", `Price prediction: ${city} → ₹${Math.round(price/100000)}L`);
+}
+
+function _doLogout(){
+  localStorage.removeItem(_SESSION_KEY);
+  window.location.href="login.html";
+}
+
+/* ── Hook into existing functions ── */
+// Wrap openPropertyModal to track views
+const _orig_openPropertyModal = openPropertyModal;
+openPropertyModal = function(p) {
+  _trackPropertyView(p.id, p.title, p.city);
+  _orig_openPropertyModal(p);
+};
+
+// Wrap runRecommendation to track searches
+const _orig_runRecommendation = runRecommendation;
+runRecommendation = function() {
+  _orig_runRecommendation();
+  const filters = {
+    city: document.getElementById("r-city")?.value||"",
+    type: document.getElementById("r-type")?.value||"",
+    budget: document.getElementById("r-budget")?.value||0,
+  };
+  _trackSearch(filters);
+};
+
+// Wrap runPrediction to track predictions
+const _orig_runPrediction = runPrediction;
+runPrediction = function() {
+  _orig_runPrediction();
+  setTimeout(()=>{
+    const city = document.getElementById("p-city")?.value||"";
+    const area = +document.getElementById("p-area")?.value||0;
+    _trackPrediction(city, (CITY_PPSF[city]||9000)*area);
+  },950);
+};
+
+// Init auth on load
+_initAuth();
 </script>
 </body>
 </html>

@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>PropSense AI — Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#07070f;--surface:#0f0f1a;--surface2:#161625;--surface3:#1e1e30;
+  --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.15);
+  --accent:#6c47ff;--accent2:#00d4a8;--accent3:#ff6b6b;--gold:#f5c842;
+  --text:#e8e8f2;--muted:#7070a0;--radius:14px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
+  display:flex;align-items:stretch;overflow:hidden}
+
+/* ── LEFT PANEL ── */
+.left-panel{flex:1;background:linear-gradient(145deg,#0d0d20 0%,#130d2e 40%,#0d1a20 100%);
+  display:flex;flex-direction:column;justify-content:center;align-items:flex-start;
+  padding:60px 64px;position:relative;overflow:hidden;min-height:100vh}
+.left-panel::before{content:"";position:absolute;inset:0;
+  background:radial-gradient(ellipse 70% 60% at 30% 30%,rgba(108,71,255,.18),transparent),
+             radial-gradient(ellipse 50% 40% at 80% 80%,rgba(0,212,168,.12),transparent)}
+.left-panel::after{content:"";position:absolute;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+.brand{position:relative;z-index:1;margin-bottom:60px}
+.brand-logo{font-family:"Syne",sans-serif;font-size:2.2rem;font-weight:800;
+  background:linear-gradient(135deg,#a78bfa,var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.brand-tag{font-size:.75rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-top:4px}
+.left-content{position:relative;z-index:1}
+.left-content h1{font-family:"Syne",sans-serif;font-size:2.8rem;font-weight:800;line-height:1.15;margin-bottom:20px}
+.left-content h1 span{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.left-content p{color:var(--muted);font-size:1.05rem;line-height:1.7;max-width:420px;margin-bottom:44px}
+.feature-list{display:flex;flex-direction:column;gap:14px}
+.feature-item{display:flex;align-items:center;gap:14px;font-size:.92rem}
+.feature-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.feature-label{color:var(--text);font-weight:500}
+.feature-sub{font-size:.75rem;color:var(--muted);margin-top:1px}
+/* Floating cards */
+.float-card{position:absolute;background:rgba(255,255,255,.04);backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px 18px;z-index:1}
+.fc1{top:80px;right:40px;animation:float1 6s ease-in-out infinite}
+.fc2{bottom:160px;right:60px;animation:float2 8s ease-in-out infinite}
+@keyframes float1{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@keyframes float2{0%,100%{transform:translateY(0)}50%{transform:translateY(10px)}}
+.fc-val{font-family:"Syne",sans-serif;font-size:1.4rem;font-weight:800;color:var(--accent2)}
+.fc-label{font-size:.68rem;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.06em}
+
+/* ── RIGHT PANEL ── */
+.right-panel{width:480px;background:var(--surface);display:flex;flex-direction:column;
+  justify-content:center;padding:52px 48px;position:relative;overflow-y:auto}
+.right-panel::before{content:"";position:absolute;top:0;left:0;width:1px;height:100%;
+  background:linear-gradient(to bottom,transparent,rgba(108,71,255,.3),rgba(0,212,168,.2),transparent)}
+
+/* ── TABS ── */
+.auth-tabs{display:flex;background:var(--surface2);border-radius:12px;padding:4px;margin-bottom:32px}
+.auth-tab{flex:1;padding:10px;text-align:center;border-radius:9px;cursor:pointer;
+  font-family:"Syne",sans-serif;font-size:.88rem;font-weight:600;color:var(--muted);
+  border:none;background:none;transition:all .2s}
+.auth-tab.active{background:var(--surface);color:var(--text);box-shadow:0 2px 10px rgba(0,0,0,.4)}
+
+/* ── FORM ── */
+.auth-header{margin-bottom:28px}
+.auth-title{font-family:"Syne",sans-serif;font-size:1.65rem;font-weight:700;margin-bottom:6px}
+.auth-sub{color:var(--muted);font-size:.875rem}
+
+.form-group{margin-bottom:18px}
+.form-label{display:block;font-size:.75rem;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.05em;font-weight:600;margin-bottom:6px}
+.form-input{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);
+  padding:12px 16px;border-radius:11px;font-family:inherit;font-size:.9rem;
+  transition:border-color .2s,box-shadow .2s;outline:none}
+.form-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(108,71,255,.15)}
+.form-input.error{border-color:var(--accent3);box-shadow:0 0 0 3px rgba(255,107,107,.12)}
+.form-input::placeholder{color:rgba(112,112,160,.5)}
+
+.input-wrap{position:relative}
+.input-wrap .form-input{padding-right:44px}
+.input-icon{position:absolute;right:14px;top:50%;transform:translateY(-50%);
+  cursor:pointer;color:var(--muted);font-size:1rem;user-select:none;transition:color .2s}
+.input-icon:hover{color:var(--text)}
+
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field-error{font-size:.72rem;color:var(--accent3);margin-top:4px}
+
+/* ── ROLE SELECTOR ── */
+.role-select{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:18px}
+.role-option{border:1px solid var(--border);border-radius:10px;padding:12px 8px;
+  text-align:center;cursor:pointer;transition:all .2s}
+.role-option:hover{border-color:var(--border2)}
+.role-option.selected{border-color:var(--accent);background:rgba(108,71,255,.1)}
+.role-option input{display:none}
+.role-icon{font-size:1.4rem;display:block;margin-bottom:4px}
+.role-label{font-size:.72rem;font-weight:600;color:var(--muted)}
+.role-option.selected .role-label{color:var(--text)}
+
+/* ── SUBMIT BUTTON ── */
+.btn-submit{width:100%;padding:13px;background:linear-gradient(135deg,var(--accent),#8b64ff);
+  color:#fff;border:none;border-radius:11px;font-family:"Syne",sans-serif;
+  font-size:.95rem;font-weight:700;cursor:pointer;transition:all .2s;
+  box-shadow:0 4px 20px rgba(108,71,255,.35);margin-top:6px}
+.btn-submit:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(108,71,255,.45)}
+.btn-submit:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+/* ── DIVIDER ── */
+.divider{display:flex;align-items:center;gap:14px;margin:20px 0;color:var(--muted);font-size:.78rem}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--border)}
+
+/* ── ADMIN LINK ── */
+.admin-link-box{background:linear-gradient(135deg,rgba(245,200,66,.08),rgba(108,71,255,.06));
+  border:1px solid rgba(245,200,66,.2);border-radius:11px;padding:14px 16px;
+  margin-top:18px;cursor:pointer;transition:all .2s}
+.admin-link-box:hover{border-color:rgba(245,200,66,.4)}
+.admin-link-title{font-size:.82rem;font-weight:600;color:var(--gold);margin-bottom:2px}
+.admin-link-sub{font-size:.72rem;color:var(--muted)}
+
+/* ── ALERTS ── */
+.alert{border-radius:10px;padding:12px 16px;font-size:.85rem;margin-bottom:16px;display:none}
+.alert.show{display:flex;align-items:center;gap:10px}
+.alert-error{background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.3);color:var(--accent3)}
+.alert-success{background:rgba(0,212,168,.1);border:1px solid rgba(0,212,168,.3);color:var(--accent2)}
+
+/* ── PASSWORD STRENGTH ── */
+.pw-strength{margin-top:6px;display:none}
+.pw-strength.show{display:block}
+.pw-bars{display:flex;gap:4px;margin-bottom:4px}
+.pw-bar{flex:1;height:3px;border-radius:2px;background:var(--surface3);transition:background .3s}
+.pw-label{font-size:.68rem;color:var(--muted)}
+
+/* ── LOADER ── */
+.btn-submit .spinner-inline{display:none;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);
+  border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;margin-left:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading .spinner-inline{display:inline-block}
+.loading .btn-text{opacity:.6}
+
+/* ── TOOLTIP ── */
+.tooltip-wrap{position:relative;display:inline-block}
+.tooltip-wrap:hover .tooltip{display:block}
+.tooltip{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);
+  background:var(--surface3);border:1px solid var(--border2);border-radius:8px;
+  padding:6px 10px;font-size:.7rem;color:var(--text);white-space:nowrap;z-index:10}
+
+@media(max-width:960px){.left-panel{display:none}.right-panel{width:100%;min-height:100vh;padding:40px 32px}}
+</style>
+</head>
+<body>
+
+<!-- LEFT PANEL -->
+<div class="left-panel">
+  <div class="brand">
+    <div class="brand-logo">PropSense AI</div>
+    <div class="brand-tag">Real Estate Analytics Platform</div>
+  </div>
+  <div class="left-content">
+    <h1>India's Smartest<br/><span>Real Estate</span><br/>Platform</h1>
+    <p>AI-powered property valuations, investment analysis, and a complete CRM to track every lead — all in one place.</p>
+    <div class="feature-list">
+      <div class="feature-item">
+        <div class="feature-icon" style="background:rgba(108,71,255,.15)">🧠</div>
+        <div><div class="feature-label">AI Price Prediction</div><div class="feature-sub">ML models trained on 2,000+ listings</div></div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon" style="background:rgba(0,212,168,.15)">📊</div>
+        <div><div class="feature-label">Smart CRM & Lead Tracking</div><div class="feature-sub">Know your hottest buyers in real time</div></div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon" style="background:rgba(245,200,66,.15)">🏢</div>
+        <div><div class="feature-label">Live Inventory Management</div><div class="feature-sub">Unit-level status updates per property</div></div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon" style="background:rgba(255,107,107,.15)">🏦</div>
+        <div><div class="feature-label">Banking & EMI Calculator</div><div class="feature-sub">8 banks, PMAY subsidy, amortisation</div></div>
+      </div>
+    </div>
+  </div>
+  <!-- Floating stat cards -->
+  <div class="float-card fc1">
+    <div class="fc-val">93%</div>
+    <div class="fc-label">ML Accuracy (R²)</div>
+  </div>
+  <div class="float-card fc2">
+    <div class="fc-val">₹87.4L</div>
+    <div class="fc-label">Avg Property Value</div>
+  </div>
+</div>
+
+<!-- RIGHT PANEL -->
+<div class="right-panel">
+  <div class="auth-tabs">
+    <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Login</button>
+    <button class="auth-tab" id="tab-signup" onclick="switchTab('signup')">Sign Up</button>
+  </div>
+
+  <!-- ALERTS -->
+  <div class="alert alert-error" id="alert-error">
+    <span>⚠️</span><span id="alert-error-msg">Invalid credentials.</span>
+  </div>
+  <div class="alert alert-success" id="alert-success">
+    <span>✓</span><span id="alert-success-msg">Account created successfully!</span>
+  </div>
+
+  <!-- ── LOGIN FORM ── -->
+  <div id="form-login">
+    <div class="auth-header">
+      <div class="auth-title">Welcome back</div>
+      <div class="auth-sub">Sign in to your PropSense account</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email or Username</label>
+      <input type="text" class="form-input" id="login-identifier" placeholder="email@example.com or username" autocomplete="username"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label" style="display:flex;justify-content:space-between">
+        Password
+        <a href="#" style="color:var(--accent);font-size:.72rem;text-decoration:none" onclick="showForgot()">Forgot password?</a>
+      </label>
+      <div class="input-wrap">
+        <input type="password" class="form-input" id="login-password" placeholder="Your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/>
+        <span class="input-icon" onclick="togglePw('login-password',this)">👁</span>
+      </div>
+    </div>
+    <button class="btn-submit" id="btn-login" onclick="doLogin()">
+      <span class="btn-text">Sign In</span>
+      <span class="spinner-inline"></span>
+    </button>
+    <div class="divider">or continue as</div>
+    <div class="admin-link-box" onclick="fillAdmin()">
+      <div class="admin-link-title">👑 Admin Access</div>
+      <div class="admin-link-sub">Fill admin credentials for demonstration</div>
+    </div>
+    <div style="margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="admin-link-box" onclick="fillManager()" style="background:rgba(0,212,168,.06);border-color:rgba(0,212,168,.2)">
+        <div class="admin-link-title" style="color:var(--accent2)">🏢 Property Manager</div>
+        <div class="admin-link-sub">Demo manager login</div>
+      </div>
+      <div class="admin-link-box" onclick="fillUser()" style="background:rgba(108,71,255,.06);border-color:rgba(108,71,255,.2)">
+        <div class="admin-link-title" style="color:#a78bfa">👤 Sample User</div>
+        <div class="admin-link-sub">Demo user login</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SIGNUP FORM ── -->
+  <div id="form-signup" style="display:none">
+    <div class="auth-header">
+      <div class="auth-title">Create account</div>
+      <div class="auth-sub">Join PropSense — it's free</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">I am a</label>
+      <div class="role-select">
+        <label class="role-option selected" onclick="selectRole(this,'buyer')">
+          <input type="radio" name="role" value="buyer" checked/>
+          <span class="role-icon">🏠</span>
+          <span class="role-label">Home Buyer</span>
+        </label>
+        <label class="role-option" onclick="selectRole(this,'investor')">
+          <input type="radio" name="role" value="investor"/>
+          <span class="role-icon">📈</span>
+          <span class="role-label">Investor</span>
+        </label>
+        <label class="role-option" onclick="selectRole(this,'agent')">
+          <input type="radio" name="role" value="agent"/>
+          <span class="role-icon">🤝</span>
+          <span class="role-label">Agent</span>
+        </label>
+      </div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">First Name</label>
+        <input type="text" class="form-input" id="su-fname" placeholder="Raj"/>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Last Name</label>
+        <input type="text" class="form-input" id="su-lname" placeholder="Sharma"/>
+      </div>
+    </div>
+    <div class="form-group" style="margin-top:14px">
+      <label class="form-label">Email Address</label>
+      <input type="email" class="form-input" id="su-email" placeholder="raj@example.com"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Phone Number</label>
+      <input type="tel" class="form-input" id="su-phone" placeholder="+91 98765 43210"/>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Preferred City</label>
+        <select class="form-input" id="su-city" style="cursor:pointer">
+          <option value="">Select city</option>
+          <option>Mumbai</option><option>Pune</option><option>Bangalore</option>
+          <option>Hyderabad</option><option>Chennai</option><option>Delhi</option>
+          <option>Kolkata</option><option>Ahmedabad</option><option>Jaipur</option><option>Surat</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label">Budget Range</label>
+        <select class="form-input" id="su-budget" style="cursor:pointer">
+          <option value="">Select budget</option>
+          <option value="0-3000000">Up to ₹30L</option>
+          <option value="3000000-6000000">₹30L – ₹60L</option>
+          <option value="6000000-10000000">₹60L – ₹1Cr</option>
+          <option value="10000000-20000000">₹1Cr – ₹2Cr</option>
+          <option value="20000000+">Above ₹2Cr</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" style="margin-top:14px">
+      <label class="form-label">Password</label>
+      <div class="input-wrap">
+        <input type="password" class="form-input" id="su-password" placeholder="Min 8 chars, 1 uppercase, 1 number" oninput="checkPwStrength(this.value)"/>
+        <span class="input-icon" onclick="togglePw('su-password',this)">👁</span>
+      </div>
+      <div class="pw-strength" id="pw-strength">
+        <div class="pw-bars">
+          <div class="pw-bar" id="pw-b1"></div>
+          <div class="pw-bar" id="pw-b2"></div>
+          <div class="pw-bar" id="pw-b3"></div>
+          <div class="pw-bar" id="pw-b4"></div>
+        </div>
+        <div class="pw-label" id="pw-label">Weak</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Confirm Password</label>
+      <input type="password" class="form-input" id="su-confirm" placeholder="Repeat password"/>
+    </div>
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:18px;font-size:.8rem;color:var(--muted)">
+      <input type="checkbox" id="su-agree" style="margin-top:3px;accent-color:var(--accent)"/>
+      <label for="su-agree">I agree to the <a href="#" style="color:var(--accent)">Terms of Service</a> and <a href="#" style="color:var(--accent)">Privacy Policy</a></label>
+    </div>
+    <button class="btn-submit" id="btn-signup" onclick="doSignup()">
+      <span class="btn-text">Create Account</span>
+      <span class="spinner-inline"></span>
+    </button>
+  </div>
+
+  <!-- Footer -->
+  <div style="margin-top:28px;text-align:center;font-size:.72rem;color:var(--muted)">
+    MCA Final Year Project · PropSense AI Platform<br/>
+    <span style="color:rgba(112,112,160,.4)">© 2025 PropSense Realty Pvt. Ltd.</span>
+  </div>
+</div>
+
+<script>
+/* ═══════ AUTH DATA (localStorage-based for static deployment) ═══════ */
+const DB_KEY_USERS    = "ps_users_v2";
+const DB_KEY_SESSION  = "ps_session_v2";
+const DB_KEY_CONFIG   = "ps_auth_cfg";
+
+/* Seed admin + managers from auth_config.json values */
+function seedDefaultUsers() {
+  let users = getUsers();
+  if (users.find(u=>u.username==="admin")) return; // already seeded
+
+  // Admin
+  users.push({
+    id:"USR_ADMIN", username:"admin", email:"admin@propsense.ai",
+    password:"Admin@PropSense123", name:"PropSense Administrator",
+    phone:"+91-9876543210", role:"admin", city:"", budget:"",
+    created_at: new Date().toISOString(), active:true,
+    profile_type:"admin"
+  });
+
+  // Property Managers
+  const managers=[
+    {id:"USR_PM001",username:"manager_prop001",email:"raj@koregaonpark.com",password:"Prop001@Mgr",name:"Raj Sharma",phone:"+91-9811223344",property_ids:["PROP001"]},
+    {id:"USR_PM002",username:"manager_prop002",email:"priya@banerrealty.com",password:"Prop002@Mgr",name:"Priya Patel",phone:"+91-9822334455",property_ids:["PROP002"]},
+    {id:"USR_PM003",username:"manager_prop003",email:"amit@hinjewadi.com",password:"Prop003@Mgr",name:"Amit Kulkarni",phone:"+91-9833445566",property_ids:["PROP003"]},
+    {id:"USR_PM004",username:"manager_prop004",email:"sneha@lodha.com",password:"Prop004@Mgr",name:"Sneha Mehta",phone:"+91-9844556677",property_ids:["PROP004"]},
+    {id:"USR_PM005",username:"manager_prop005",email:"vivek@prestige.com",password:"Prop005@Mgr",name:"Vivek Nair",phone:"+91-9855667788",property_ids:["PROP005","PROP006"]},
+    {id:"USR_PM006",username:"manager_multi",email:"deepak@propsense.ai",password:"Multi@Mgr456",name:"Deepak Joshi",phone:"+91-9866778899",property_ids:["PROP007","PROP008","PROP009","PROP010","PROP011","PROP012"]},
+  ];
+  managers.forEach(m=>users.push({...m,role:"property_manager",city:"",budget:"",created_at:new Date().toISOString(),active:true,profile_type:"property_manager"}));
+
+  // Sample user for demo
+  users.push({
+    id:"USR_DEMO1", username:"user_demo", email:"demo@user.com",
+    password:"Demo@1234", name:"Demo User",
+    phone:"+91-9000000001", role:"user", city:"Pune", budget:"6000000-10000000",
+    profile_type:"buyer", created_at: new Date().toISOString(), active:true,
+    activity:[]
+  });
+
+  saveUsers(users);
+}
+
+function getUsers(){ return JSON.parse(localStorage.getItem(DB_KEY_USERS)||"[]") }
+function saveUsers(u){ localStorage.setItem(DB_KEY_USERS, JSON.stringify(u)) }
+function getSession(){ return JSON.parse(localStorage.getItem(DB_KEY_SESSION)||"null") }
+function saveSession(s){ localStorage.setItem(DB_KEY_SESSION, JSON.stringify(s)) }
+
+/* ═══════ INIT ═══════ */
+seedDefaultUsers();
+const existingSession = getSession();
+if (existingSession) redirectByRole(existingSession.role, existingSession.property_ids);
+
+/* ═══════ TAB SWITCH ═══════ */
+function switchTab(tab){
+  document.getElementById("form-login").style.display   = tab==="login"  ? "block" : "none";
+  document.getElementById("form-signup").style.display  = tab==="signup" ? "block" : "none";
+  document.getElementById("tab-login").classList.toggle("active",  tab==="login");
+  document.getElementById("tab-signup").classList.toggle("active", tab==="signup");
+  clearAlerts();
+}
+
+/* ═══════ HELPERS ═══════ */
+function showErr(msg){ const a=document.getElementById("alert-error"); document.getElementById("alert-error-msg").textContent=msg; a.classList.add("show"); document.getElementById("alert-success").classList.remove("show") }
+function showOk(msg){  const a=document.getElementById("alert-success"); document.getElementById("alert-success-msg").textContent=msg; a.classList.add("show"); document.getElementById("alert-error").classList.remove("show") }
+function clearAlerts(){ document.getElementById("alert-error").classList.remove("show"); document.getElementById("alert-success").classList.remove("show") }
+function togglePw(id, icon){ const el=document.getElementById(id); if(el.type==="password"){el.type="text";icon.textContent="🙈"}else{el.type="password";icon.textContent="👁"} }
+function setLoading(btnId, on){ const btn=document.getElementById(btnId); btn.classList.toggle("loading",on); btn.disabled=on }
+function selectRole(el,v){ document.querySelectorAll(".role-option").forEach(o=>o.classList.remove("selected")); el.classList.add("selected") }
+
+function redirectByRole(role, propIds){
+  if(role==="admin")            return window.location.href="admin.html";
+  if(role==="property_manager") return window.location.href=`property-manager.html`;
+  return window.location.href="index.html";
+}
+
+/* ═══════ LOGIN ═══════ */
+function doLogin(){
+  clearAlerts();
+  const id  = document.getElementById("login-identifier").value.trim();
+  const pw  = document.getElementById("login-password").value;
+  if(!id||!pw){ showErr("Please enter your username/email and password."); return }
+
+  setLoading("btn-login",true);
+  setTimeout(()=>{
+    const users = getUsers();
+    const user  = users.find(u=>(u.username===id||u.email===id) && u.password===pw && u.active);
+    if(!user){ showErr("Invalid credentials. Please try again."); setLoading("btn-login",false); return }
+
+    const session = {
+      id: user.id, name: user.name, email: user.email,
+      username: user.username, role: user.role,
+      property_ids: user.property_ids||[],
+      city: user.city||"", budget: user.budget||"",
+      profile_type: user.profile_type||"buyer",
+      login_time: new Date().toISOString()
+    };
+    saveSession(session);
+
+    // Log activity
+    if(user.role==="user"){
+      const all = getUsers();
+      const idx = all.findIndex(u=>u.id===user.id);
+      if(idx>=0){
+        all[idx].activity = all[idx].activity||[];
+        all[idx].activity.push({type:"login",timestamp:new Date().toISOString(),details:"User logged in"});
+        all[idx].last_seen = new Date().toISOString();
+        saveUsers(all);
+      }
+    }
+
+    showOk(`Welcome back, ${user.name.split(" ")[0]}! Redirecting…`);
+    setTimeout(()=>redirectByRole(user.role, user.property_ids), 800);
+  },600);
+}
+
+/* ═══════ SIGNUP ═══════ */
+function doSignup(){
+  clearAlerts();
+  const fname = document.getElementById("su-fname").value.trim();
+  const lname = document.getElementById("su-lname").value.trim();
+  const email = document.getElementById("su-email").value.trim();
+  const phone = document.getElementById("su-phone").value.trim();
+  const city  = document.getElementById("su-city").value;
+  const budget= document.getElementById("su-budget").value;
+  const pw    = document.getElementById("su-password").value;
+  const pw2   = document.getElementById("su-confirm").value;
+  const agree = document.getElementById("su-agree").checked;
+  const role  = document.querySelector('input[name="role"]:checked')?.value||"buyer";
+
+  if(!fname||!lname){ showErr("Please enter your full name."); return }
+  if(!email||!email.includes("@")){ showErr("Please enter a valid email address."); return }
+  if(!pw||pw.length<8){ showErr("Password must be at least 8 characters."); return }
+  if(pw!==pw2){ showErr("Passwords do not match."); return }
+  if(!agree){ showErr("Please agree to the Terms of Service."); return }
+
+  const users = getUsers();
+  if(users.find(u=>u.email===email)){ showErr("An account with this email already exists. Please login."); return }
+
+  setLoading("btn-signup",true);
+  setTimeout(()=>{
+    const uid = "USR_" + Date.now();
+    const newUser = {
+      id: uid,
+      username: email.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g,"_") + "_" + Math.random().toString(36).slice(-4),
+      email, password: pw,
+      name: `${fname} ${lname}`,
+      phone, city, budget,
+      role: "user", profile_type: role,
+      created_at: new Date().toISOString(),
+      active: true,
+      activity: [{type:"signup",timestamp:new Date().toISOString(),details:"Account created"}],
+      last_seen: new Date().toISOString(),
+      wishlist:[], viewed_properties:[], search_history:[]
+    };
+    users.push(newUser);
+    saveUsers(users);
+
+    const session = {id:uid,name:newUser.name,email,username:newUser.username,role:"user",property_ids:[],city,budget,profile_type:role,login_time:new Date().toISOString()};
+    saveSession(session);
+    showOk("Account created! Redirecting to platform…");
+    setTimeout(()=>window.location.href="index.html",900);
+  },700);
+}
+
+/* ═══════ PASSWORD STRENGTH ═══════ */
+function checkPwStrength(pw){
+  const el=document.getElementById("pw-strength"); el.classList.add("show");
+  let score=0;
+  if(pw.length>=8) score++;
+  if(/[A-Z]/.test(pw)) score++;
+  if(/[0-9]/.test(pw)) score++;
+  if(/[^A-Za-z0-9]/.test(pw)) score++;
+  const colors=["#ff6b6b","#f5c842","#f5c842","#00d4a8"];
+  const labels=["Weak","Fair","Good","Strong"];
+  for(let i=1;i<=4;i++){
+    document.getElementById(`pw-b${i}`).style.background = i<=score?colors[score-1]:"var(--surface3)";
+  }
+  document.getElementById("pw-label").textContent = score>0?labels[score-1]:"Weak";
+  document.getElementById("pw-label").style.color = score>0?colors[score-1]:"var(--muted)";
+}
+
+/* ═══════ DEMO FILL ═══════ */
+function fillAdmin(){
+  switchTab("login");
+  document.getElementById("login-identifier").value="admin";
+  document.getElementById("login-password").value="Admin@PropSense123";
+}
+function fillManager(){
+  switchTab("login");
+  document.getElementById("login-identifier").value="manager_prop001";
+  document.getElementById("login-password").value="Prop001@Mgr";
+}
+function fillUser(){
+  switchTab("login");
+  document.getElementById("login-identifier").value="user_demo";
+  document.getElementById("login-password").value="Demo@1234";
+}
+
+function showForgot(){
+  alert("Password Reset\n\nFor admin/manager accounts, contact your system administrator.\n\nAdmin: admin@propsense.ai\nPhone: +91-9876543210");
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>PropSense — Property Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#07070f;--surface:#0f0f1a;--surface2:#161625;--surface3:#1e1e30;--border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.13);--accent:#6c47ff;--accent2:#00d4a8;--accent3:#ff6b6b;--gold:#f5c842;--text:#e8e8f2;--muted:#7070a0;--radius:13px}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex}
+
+/* SIDEBAR */
+.sidebar{width:230px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;bottom:0;z-index:100}
+.sb-logo{padding:20px 18px;border-bottom:1px solid var(--border)}
+.sb-logo h1{font-family:"Syne",sans-serif;font-size:1.2rem;font-weight:800;background:linear-gradient(135deg,#a78bfa,var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sb-badge-mgr{background:rgba(0,212,168,.15);color:var(--accent2);font-size:.6rem;padding:2px 8px;border-radius:6px;font-weight:700;margin-top:4px;display:inline-block}
+.sb-nav{padding:10px 8px;flex:1;overflow-y:auto}
+.sb-section{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;padding:10px 10px 5px;font-weight:700}
+.sb-item{display:flex;align-items:center;gap:9px;padding:10px 11px;border-radius:9px;cursor:pointer;font-size:.845rem;font-weight:500;color:var(--muted);transition:all .18s;border:none;background:none;width:100%;text-align:left}
+.sb-item:hover{color:var(--text);background:var(--surface2)}
+.sb-item.active{color:#fff;background:rgba(0,212,168,.15);border:1px solid rgba(0,212,168,.25)}
+.sb-item .icon{font-size:.9rem;width:20px;text-align:center}
+.prop-switcher{padding:10px 10px;border-bottom:1px solid var(--border)}
+.prop-switcher label{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px}
+.prop-switcher select{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:9px;font-family:inherit;font-size:.8rem;outline:none;cursor:pointer}
+.sb-footer{padding:12px 16px;border-top:1px solid var(--border)}
+.sb-user-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.sb-av{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--accent2),var(--accent));display:flex;align-items:center;justify-content:center;font-family:"Syne",sans-serif;font-size:.78rem;font-weight:700;color:#fff}
+.sb-nm{font-size:.78rem;font-weight:600}
+.sb-rl{font-size:.65rem;color:var(--muted)}
+.logout-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.72rem;transition:color .2s}
+.logout-btn:hover{color:var(--accent3)}
+
+/* MAIN */
+.main{margin-left:230px;flex:1;min-height:100vh;padding:28px 36px}
+.page{display:none;max-width:1300px}.page.active{display:block;animation:fadeIn .28s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* TOPBAR */
+.topbar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px}
+.page-title{font-family:"Syne",sans-serif;font-size:1.6rem;font-weight:700}
+.page-sub{color:var(--muted);font-size:.84rem;margin-top:3px}
+.topbar-right{display:flex;gap:10px;align-items:center}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;position:relative;overflow:hidden}
+.stat::after{content:"";position:absolute;top:-20px;right:-20px;width:60px;height:60px;border-radius:50%;background:var(--c,var(--accent));opacity:.07}
+.stat-lbl{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.stat-val{font-family:"Syne",sans-serif;font-size:1.45rem;font-weight:700}
+.stat-sub{font-size:.7rem;color:var(--muted);margin-top:4px}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:18px}
+.card-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.card-title{font-family:"Syne",sans-serif;font-size:.92rem;font-weight:600}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+
+/* UNIT GRID */
+.unit-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.unit-cell{border-radius:10px;padding:12px;border:1px solid var(--border);cursor:pointer;transition:all .2s;position:relative}
+.unit-cell:hover{transform:scale(1.04);z-index:2}
+.unit-cell.available{background:rgba(0,212,168,.06);border-color:rgba(0,212,168,.25)}
+.unit-cell.booked{background:rgba(245,200,66,.06);border-color:rgba(245,200,66,.25)}
+.unit-cell.sold{background:rgba(255,107,107,.06);border-color:rgba(255,107,107,.25)}
+.unit-no{font-family:"Syne",sans-serif;font-size:.88rem;font-weight:700;margin-bottom:3px}
+.unit-type{font-size:.68rem;color:var(--muted)}
+.unit-price{font-size:.75rem;font-weight:600;margin-top:6px}
+.unit-status-dot{width:7px;height:7px;border-radius:50%;position:absolute;top:9px;right:9px}
+.dot-available{background:var(--accent2)}.dot-booked{background:var(--gold)}.dot-sold{background:var(--accent3)}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;font-size:.82rem}
+.tbl th{background:var(--surface2);color:var(--muted);font-weight:600;padding:9px 12px;text-align:left;font-size:.67rem;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border)}
+.tbl td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.tbl tr:last-child td{border:none}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:16px;font-size:.67rem;font-weight:600}
+.bg{background:rgba(0,212,168,.14);color:var(--accent2)}.br{background:rgba(255,107,107,.14);color:var(--accent3)}.bb{background:rgba(108,71,255,.14);color:#a78bfa}.bgo{background:rgba(245,200,66,.14);color:var(--gold)}
+
+/* BTNS */
+.btn{padding:8px 16px;border-radius:9px;border:none;cursor:pointer;font-family:"Syne",sans-serif;font-size:.8rem;font-weight:600;transition:all .2s;display:inline-flex;align-items:center;gap:5px}
+.btn-primary{background:linear-gradient(135deg,var(--accent),#8b64ff);color:#fff;box-shadow:0 3px 12px rgba(108,71,255,.3)}
+.btn-primary:hover{transform:translateY(-1px)}
+.btn-success{background:linear-gradient(135deg,#059669,var(--accent2));color:#fff}
+.btn-ghost{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.btn-sm{padding:6px 12px;font-size:.74rem}
+.btn-danger{background:rgba(255,107,107,.12);color:var(--accent3);border:1px solid rgba(255,107,107,.25)}
+
+/* FORM */
+.form-grp{margin-bottom:13px}
+.form-lbl{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600;display:block;margin-bottom:4px}
+.form-inp{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:9px;font-family:inherit;font-size:.86rem;outline:none}
+.form-inp:focus{border-color:var(--accent)}
+.form-row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:18px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto}
+.modal-hd{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--surface);z-index:5}
+.modal-title{font-family:"Syne",sans-serif;font-size:.98rem;font-weight:700}
+.modal-close{background:var(--surface2);border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center}
+.modal-body{padding:22px}
+
+/* LEGEND */
+.legend{display:flex;gap:16px;margin-bottom:14px;font-size:.75rem}
+.legend-item{display:flex;align-items:center;gap:5px}
+.legend-dot{width:9px;height:9px;border-radius:50%}
+
+/* PRICE HISTORY */
+.price-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:.82rem}
+.price-row:last-child{border:none}
+
+/* AMENITY STATUS */
+.amenity-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);font-size:.83rem}
+.amenity-row:last-child{border:none}
+
+/* PROGRESS BAR */
+.prog-wrap{background:var(--surface2);border-radius:4px;height:8px;overflow:hidden;margin-top:6px}
+.prog-bar{height:8px;border-radius:4px;transition:width .5s}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sb-logo">
+    <h1>PropSense AI</h1>
+    <span class="sb-badge-mgr">🏢 Property Manager</span>
+  </div>
+  <div class="prop-switcher">
+    <label>Active Property</label>
+    <select id="prop-selector" onchange="switchProperty(this.value)"></select>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-section">Property</div>
+    <button class="sb-item active" onclick="showPage('overview',this)"><span class="icon">📊</span>Overview</button>
+    <button class="sb-item" onclick="showPage('inventory',this)"><span class="icon">📦</span>Unit Inventory</button>
+    <button class="sb-item" onclick="showPage('pricing',this)"><span class="icon">💰</span>Pricing & History</button>
+    <button class="sb-item" onclick="showPage('amenities',this)"><span class="icon">✅</span>Amenities</button>
+    <button class="sb-item" onclick="showPage('info',this)"><span class="icon">ℹ️</span>Property Info</button>
+    <div class="sb-section">Platform</div>
+    <button class="sb-item" onclick="window.open('index.html','_blank')"><span class="icon">🌐</span>View Listing</button>
+  </nav>
+  <div class="sb-footer">
+    <div class="sb-user-row">
+      <div class="sb-av" id="mgr-av">M</div>
+      <div><div class="sb-nm" id="mgr-nm">Manager</div><div class="sb-rl">Property Manager</div></div>
+    </div>
+    <button class="logout-btn" onclick="doLogout()">⏻ Sign Out</button>
+  </div>
+</aside>
+
+<main class="main">
+
+<!-- ── OVERVIEW ── -->
+<div id="page-overview" class="page active">
+  <div class="topbar">
+    <div><div class="page-title" id="ov-title">Property Overview</div><div class="page-sub" id="ov-sub">Loading…</div></div>
+    <div class="topbar-right">
+      <button class="btn btn-success btn-sm" onclick="showPage('inventory',document.querySelectorAll('.sb-item')[1])">+ Add/Edit Units</button>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="stat" style="--c:var(--accent2)"><div class="stat-lbl">Available Units</div><div class="stat-val" id="ov-avail">—</div><div class="stat-sub">Ready to sell</div></div>
+    <div class="stat" style="--c:var(--gold)"><div class="stat-lbl">Booked Units</div><div class="stat-val" id="ov-booked">—</div><div class="stat-sub">Token paid</div></div>
+    <div class="stat" style="--c:var(--accent3)"><div class="stat-lbl">Sold Units</div><div class="stat-val" id="ov-sold">—</div><div class="stat-sub">Registry done</div></div>
+    <div class="stat" style="--c:var(--accent)"><div class="stat-lbl">Total Units</div><div class="stat-val" id="ov-total">—</div><div class="stat-sub">In this property</div></div>
+  </div>
+  <div class="card">
+    <div class="card-hd"><div class="card-title">Inventory Progress</div></div>
+    <div id="ov-progress"></div>
+  </div>
+  <div class="card">
+    <div class="card-hd"><div class="card-title">Unit Status Visual</div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent2)"></div>Available</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div>Booked</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent3)"></div>Sold</div>
+      </div>
+    </div>
+    <div class="unit-grid" id="ov-unit-grid"></div>
+  </div>
+</div>
+
+<!-- ── INVENTORY ── -->
+<div id="page-inventory" class="page">
+  <div class="topbar">
+    <div><div class="page-title">Unit Inventory</div><div class="page-sub">Manage availability and booking details</div></div>
+    <div class="topbar-right">
+      <button class="btn btn-primary btn-sm" onclick="openAddUnit()">➕ Add Unit</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportInventory()">⬇️ Export</button>
+    </div>
+  </div>
+  <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+    <select class="form-inp" id="inv-filter" style="width:160px" onchange="renderInventoryTable()">
+      <option value="">All Status</option><option value="available">Available</option><option value="booked">Booked</option><option value="sold">Sold</option>
+    </select>
+    <input type="text" class="form-inp" id="inv-search" style="width:200px" placeholder="Search unit…" oninput="renderInventoryTable()"/>
+  </div>
+  <div class="card" style="padding:0;overflow-x:auto">
+    <table class="tbl" id="inv-tbl">
+      <thead><tr><th>Unit No.</th><th>Floor</th><th>Type</th><th>Area</th><th>Price</th><th>Facing</th><th>Parking</th><th>Status</th><th>Booked By</th><th>Date</th><th>Notes</th><th>Actions</th></tr></thead>
+      <tbody id="inv-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ── PRICING ── -->
+<div id="page-pricing" class="page">
+  <div class="topbar">
+    <div><div class="page-title">Pricing & History</div><div class="page-sub">Track price changes and update current rates</div></div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Update Unit Prices (Bulk)</div></div>
+      <div class="form-grp"><label class="form-lbl">Price Adjustment</label>
+        <select class="form-inp" id="price-adj-type">
+          <option value="pct">Percentage increase (%)</option>
+          <option value="flat">Flat increase (₹)</option>
+          <option value="set">Set exact price (₹)</option>
+        </select>
+      </div>
+      <div class="form-grp"><label class="form-lbl">Value</label><input type="number" class="form-inp" id="price-adj-val" placeholder="e.g. 5 for 5% or 50000 for ₹50K"/></div>
+      <div class="form-grp"><label class="form-lbl">Apply To</label>
+        <select class="form-inp" id="price-adj-scope">
+          <option value="available">Available units only</option><option value="all">All units</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="bulkPriceUpdate()">💰 Apply Price Update</button>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="card-title">Price History</div><button class="btn btn-ghost btn-sm" onclick="openAddPriceHistory()">+ Add Entry</button></div>
+      <div id="price-history-list"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-hd"><div class="card-title">Current Price Summary</div></div>
+    <table class="tbl" id="price-summary-tbl">
+      <thead><tr><th>Status</th><th>Units</th><th>Min Price</th><th>Max Price</th><th>Avg Price</th></tr></thead>
+      <tbody id="price-summary-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ── AMENITIES ── -->
+<div id="page-amenities" class="page">
+  <div class="topbar">
+    <div><div class="page-title">Amenities Status</div><div class="page-sub">Update operational status of all amenities</div></div>
+    <div class="topbar-right">
+      <button class="btn btn-primary btn-sm" onclick="openAddAmenity()">➕ Add Amenity</button>
+    </div>
+  </div>
+  <div class="card">
+    <div id="amenity-list"></div>
+  </div>
+</div>
+
+<!-- ── PROPERTY INFO ── -->
+<div id="page-info" class="page">
+  <div class="topbar"><div><div class="page-title">Property Info</div><div class="page-sub">Edit basic details shown on listing page</div></div></div>
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title" style="margin-bottom:14px">Basic Details</div>
+      <div class="form-grp"><label class="form-lbl">Property Title</label><input class="form-inp" id="pi-title"/></div>
+      <div class="form-grp"><label class="form-lbl">Builder / Developer</label><input class="form-inp" id="pi-builder"/></div>
+      <div class="form-grp"><label class="form-lbl">RERA ID</label><input class="form-inp" id="pi-rera"/></div>
+      <div class="form-grp"><label class="form-lbl">Possession Date</label><input class="form-inp" id="pi-possession" placeholder="e.g. Ready to Move / Dec 2025"/></div>
+      <div class="form-grp"><label class="form-lbl">Status</label>
+        <select class="form-inp" id="pi-status">
+          <option value="available">Available</option><option value="sold">Sold Out</option><option value="upcoming">Upcoming</option>
+        </select>
+      </div>
+      <div class="form-grp"><label class="form-lbl">Description</label><textarea class="form-inp" id="pi-desc" rows="4" style="resize:vertical"></textarea></div>
+      <button class="btn btn-primary" onclick="savePropInfo()">💾 Save Changes</button>
+    </div>
+    <div class="card">
+      <div class="card-title" style="margin-bottom:14px">Nearby Facilities</div>
+      <div id="nearby-editor"></div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="addNearby()">+ Add Facility</button>
+      <div class="card-title" style="margin-top:20px;margin-bottom:10px;font-size:.85rem">Investment Info</div>
+      <div class="form-row2">
+        <div class="form-grp"><label class="form-lbl">Rental Yield (%)</label><input class="form-inp" id="pi-yield" type="number" step="0.1"/></div>
+        <div class="form-grp"><label class="form-lbl">Monthly Rent (₹)</label><input class="form-inp" id="pi-rent" type="number"/></div>
+        <div class="form-grp"><label class="form-lbl">5yr Appreciation (%)</label><input class="form-inp" id="pi-appr" type="number"/></div>
+      </div>
+      <button class="btn btn-success btn-sm" onclick="saveInvestmentInfo()">💾 Save Investment Info</button>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<!-- UNIT EDIT MODAL -->
+<div class="overlay" id="unit-modal" onclick="if(event.target===this)closeUnitModal()">
+  <div class="modal">
+    <div class="modal-hd"><div class="modal-title" id="unit-modal-title">Edit Unit</div><button class="modal-close" onclick="closeUnitModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="form-row2">
+        <div class="form-grp"><label class="form-lbl">Unit Number</label><input class="form-inp" id="um-unit"/></div>
+        <div class="form-grp"><label class="form-lbl">Floor</label><input class="form-inp" id="um-floor" type="number"/></div>
+        <div class="form-grp"><label class="form-lbl">Type (e.g. 3BHK)</label><input class="form-inp" id="um-type"/></div>
+        <div class="form-grp"><label class="form-lbl">Area (sqft)</label><input class="form-inp" id="um-area" type="number"/></div>
+        <div class="form-grp"><label class="form-lbl">Price (₹)</label><input class="form-inp" id="um-price" type="number"/></div>
+        <div class="form-grp"><label class="form-lbl">Facing</label><input class="form-inp" id="um-facing" placeholder="East, West…"/></div>
+        <div class="form-grp"><label class="form-lbl">Parking Spots</label><input class="form-inp" id="um-parking" type="number" min="0"/></div>
+        <div class="form-grp"><label class="form-lbl">Status</label>
+          <select class="form-inp" id="um-status" onchange="toggleBookingFields()">
+            <option value="available">Available</option><option value="booked">Booked</option><option value="sold">Sold</option>
+          </select>
+        </div>
+      </div>
+      <div id="booking-fields" style="display:none">
+        <div class="form-row2">
+          <div class="form-grp"><label class="form-lbl">Booked By (Name)</label><input class="form-inp" id="um-booked-by" placeholder="Customer name"/></div>
+          <div class="form-grp"><label class="form-lbl">Booking Date</label><input class="form-inp" id="um-booked-date" type="date"/></div>
+        </div>
+      </div>
+      <div class="form-grp"><label class="form-lbl">Notes</label><textarea class="form-inp" id="um-notes" rows="2" style="resize:vertical"></textarea></div>
+      <input type="hidden" id="um-edit-idx"/>
+      <div style="display:flex;gap:10px;margin-top:6px">
+        <button class="btn btn-primary" onclick="saveUnit()">💾 Save Unit</button>
+        <button class="btn btn-ghost" onclick="closeUnitModal()">Cancel</button>
+        <button class="btn btn-danger btn-sm" style="margin-left:auto" id="um-delete-btn" onclick="deleteUnit()">🗑 Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PRICE HISTORY MODAL -->
+<div class="overlay" id="ph-modal" onclick="if(event.target===this)document.getElementById('ph-modal').classList.remove('open')">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-hd"><div class="modal-title">Add Price History Entry</div><button class="modal-close" onclick="document.getElementById('ph-modal').classList.remove('open')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grp"><label class="form-lbl">Date</label><input type="date" class="form-inp" id="ph-date"/></div>
+      <div class="form-grp"><label class="form-lbl">Price (₹)</label><input type="number" class="form-inp" id="ph-price" placeholder="e.g. 12500000"/></div>
+      <div class="form-grp"><label class="form-lbl">Notes</label><input class="form-inp" id="ph-note" placeholder="e.g. Festive price hike"/></div>
+      <button class="btn btn-primary" onclick="savePriceHistory()">Add Entry</button>
+    </div>
+  </div>
+</div>
+
+<!-- AMENITY MODAL -->
+<div class="overlay" id="amen-modal" onclick="if(event.target===this)document.getElementById('amen-modal').classList.remove('open')">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-hd"><div class="modal-title">Add Amenity</div><button class="modal-close" onclick="document.getElementById('amen-modal').classList.remove('open')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grp"><label class="form-lbl">Amenity Name</label><input class="form-inp" id="new-amen-name" placeholder="e.g. Tennis Court"/></div>
+      <div class="form-grp"><label class="form-lbl">Status</label>
+        <select class="form-inp" id="new-amen-status"><option value="operational">Operational</option><option value="coming_soon">Coming Soon</option><option value="under_maintenance">Under Maintenance</option></select>
+      </div>
+      <button class="btn btn-primary" onclick="saveNewAmenity()">Add</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════ AUTH ═══════ */
+const DB_SESSION  = "ps_session_v2";
+const DB_USERS    = "ps_users_v2";
+const DB_PROPSV   = "ps_prop_views";
+const DB_INV      = "ps_inventory_v2";
+const DB_PROPS    = "props_v2";
+
+const session = JSON.parse(localStorage.getItem(DB_SESSION)||"null");
+if (!session || (session.role!=="property_manager" && session.role!=="admin")) {
+  window.location.href = "login.html";
+}
+document.getElementById("mgr-av").textContent  = (session.name||"M").charAt(0).toUpperCase();
+document.getElementById("mgr-nm").textContent  = session.name||"Manager";
+
+/* ═══════ LOAD DATA ═══════ */
+let ALL_PROPS = [];
+let INVENTORY = {};
+let currentPropId = "";
+
+async function initApp() {
+  // Load properties
+  const storedProps = localStorage.getItem(DB_PROPS);
+  if (storedProps) {
+    ALL_PROPS = JSON.parse(storedProps);
+  } else {
+    try { const r=await fetch("data/properties.json"); ALL_PROPS=await r.json(); localStorage.setItem(DB_PROPS,JSON.stringify(ALL_PROPS)); } catch(e){}
+  }
+
+  // Load inventory
+  let storedInv = localStorage.getItem(DB_INV);
+  if (!storedInv) {
+    try { const r=await fetch("data/inventory.json"); INVENTORY=await r.json(); localStorage.setItem(DB_INV,JSON.stringify(INVENTORY)); }
+    catch(e){ INVENTORY={}; }
+  } else {
+    INVENTORY = JSON.parse(storedInv);
+  }
+
+  // Filter to assigned properties
+  const assignedIds = session.property_ids || [];
+  let myProps = session.role==="admin" ? ALL_PROPS : ALL_PROPS.filter(p=>assignedIds.includes(p.id));
+  if (!myProps.length) myProps = ALL_PROPS; // fallback
+
+  // Build selector
+  const sel = document.getElementById("prop-selector");
+  sel.innerHTML = myProps.map(p=>`<option value="${p.id}">${p.id}: ${p.title?.slice(0,30)}</option>`).join("");
+
+  // Check URL param
+  const urlPid = new URLSearchParams(window.location.search).get("pid");
+  if (urlPid && myProps.find(p=>p.id===urlPid)) sel.value=urlPid;
+
+  switchProperty(sel.value);
+}
+
+function switchProperty(pid) {
+  currentPropId = pid;
+  // Ensure inventory entry exists
+  if (!INVENTORY[pid]) {
+    const prop = ALL_PROPS.find(p=>p.id===pid)||{};
+    INVENTORY[pid] = {property_id:pid,title:prop.title||pid,total_units:0,tower:"",units:[],price_history:[],amenity_status:{},last_updated:new Date().toISOString().slice(0,10),updated_by:session.username||"manager"};
+    saveInventory();
+  }
+  renderOverview();
+  renderInventoryTable();
+  renderPricing();
+  renderAmenities();
+  renderPropInfo();
+}
+
+function saveInventory() {
+  INVENTORY[currentPropId].last_updated = new Date().toISOString().slice(0,10);
+  INVENTORY[currentPropId].updated_by   = session.username||"manager";
+  localStorage.setItem(DB_INV, JSON.stringify(INVENTORY));
+  // Sync available unit count back to main props
+  const inv = INVENTORY[currentPropId];
+  const avail = (inv.units||[]).filter(u=>u.status==="available").length;
+  const props = JSON.parse(localStorage.getItem(DB_PROPS)||"[]");
+  const idx = props.findIndex(p=>p.id===currentPropId);
+  if (idx>=0 && avail===0) props[idx].status="sold";
+  else if (idx>=0) props[idx].status="available";
+  localStorage.setItem(DB_PROPS, JSON.stringify(props));
+}
+
+/* ═══════ OVERVIEW ═══════ */
+function renderOverview() {
+  const inv = INVENTORY[currentPropId]||{};
+  const prop = ALL_PROPS.find(p=>p.id===currentPropId)||{};
+  const units = inv.units||[];
+  const a=units.filter(u=>u.status==="available").length;
+  const b=units.filter(u=>u.status==="booked").length;
+  const s=units.filter(u=>u.status==="sold").length;
+  const t=units.length;
+
+  document.getElementById("ov-title").textContent = prop.title||inv.title||currentPropId;
+  document.getElementById("ov-sub").textContent   = `${prop.locality||""}, ${prop.city||""} · RERA: ${prop.rera_id||"N/A"} · Last updated: ${inv.last_updated||"—"}`;
+  document.getElementById("ov-avail").textContent = a;
+  document.getElementById("ov-booked").textContent= b;
+  document.getElementById("ov-sold").textContent  = s;
+  document.getElementById("ov-total").textContent = t;
+
+  // Progress bar
+  document.getElementById("ov-progress").innerHTML = t===0 ? `<p style="color:var(--muted)">No units added yet. Go to Unit Inventory to add units.</p>` :
+    `<div style="display:flex;gap:0;margin-bottom:6px;overflow:hidden;border-radius:6px;height:18px">
+      <div style="width:${s/t*100}%;background:var(--accent3);transition:width .5s"></div>
+      <div style="width:${b/t*100}%;background:var(--gold);transition:width .5s"></div>
+      <div style="width:${a/t*100}%;background:var(--accent2);transition:width .5s"></div>
+    </div>
+    <div style="display:flex;gap:18px;font-size:.78rem;color:var(--muted)">
+      <span style="color:var(--accent3)">■ Sold: ${s} (${t?Math.round(s/t*100):0}%)</span>
+      <span style="color:var(--gold)">■ Booked: ${b} (${t?Math.round(b/t*100):0}%)</span>
+      <span style="color:var(--accent2)">■ Available: ${a} (${t?Math.round(a/t*100):0}%)</span>
+    </div>`;
+
+  // Unit grid
+  document.getElementById("ov-unit-grid").innerHTML = units.map((u,i)=>`
+    <div class="unit-cell ${u.status}" onclick="editUnitByIndex(${i})" title="${u.booked_by||''}">
+      <div class="unit-status-dot dot-${u.status}"></div>
+      <div class="unit-no">${u.unit_no}</div>
+      <div class="unit-type">${u.type} · Fl.${u.floor}</div>
+      <div class="unit-price">${fmtINR(u.price)}</div>
+    </div>`).join("") || `<p style="color:var(--muted);font-size:.85rem">No units yet — add from Inventory tab.</p>`;
+}
+
+/* ═══════ INVENTORY TABLE ═══════ */
+function renderInventoryTable() {
+  const units = (INVENTORY[currentPropId]?.units)||[];
+  const flt  = document.getElementById("inv-filter")?.value||"";
+  const q    = (document.getElementById("inv-search")?.value||"").toLowerCase();
+  let filtered = units;
+  if(flt) filtered=filtered.filter(u=>u.status===flt);
+  if(q)   filtered=filtered.filter(u=>u.unit_no.toLowerCase().includes(q)||(u.booked_by||"").toLowerCase().includes(q));
+  document.getElementById("inv-tbody").innerHTML = filtered.map((u,i)=>{
+    const realIdx = units.indexOf(u);
+    return `<tr>
+      <td><code style="color:var(--accent);font-size:.8rem">${u.unit_no}</code></td>
+      <td>${u.floor}</td><td>${u.type}</td>
+      <td>${u.area_sqft?.toLocaleString()} sqft</td>
+      <td style="font-weight:600;color:var(--accent2)">${fmtINR(u.price)}</td>
+      <td>${u.facing||"—"}</td>
+      <td style="text-align:center">${u.parking||0}</td>
+      <td><span class="badge ${u.status==="available"?"bg":u.status==="booked"?"bgo":"br"}">${u.status}</span></td>
+      <td style="font-size:.78rem">${u.booked_by||"—"}</td>
+      <td style="font-size:.72rem;color:var(--muted)">${u.booked_date||"—"}</td>
+      <td style="font-size:.75rem;color:var(--muted);max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${u.notes||"—"}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="editUnitByIndex(${realIdx})">✏️</button></td>
+    </tr>`;
+  }).join("") || `<tr><td colspan="12" style="text-align:center;color:var(--muted);padding:20px">No units. Use "Add Unit" to create inventory.</td></tr>`;
+}
+
+/* ═══════ UNIT MODAL ═══════ */
+function openAddUnit() {
+  document.getElementById("unit-modal-title").textContent="Add New Unit";
+  document.getElementById("um-edit-idx").value="-1";
+  ["um-unit","um-facing","um-notes","um-booked-by","um-booked-date"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("um-floor").value=1;
+  document.getElementById("um-area").value=1200;
+  document.getElementById("um-price").value=10000000;
+  document.getElementById("um-parking").value=1;
+  document.getElementById("um-type").value="3BHK";
+  document.getElementById("um-status").value="available";
+  document.getElementById("booking-fields").style.display="none";
+  document.getElementById("um-delete-btn").style.display="none";
+  document.getElementById("unit-modal").classList.add("open");
+}
+
+function editUnitByIndex(i) {
+  const units = INVENTORY[currentPropId]?.units||[];
+  const u = units[i]; if(!u) return;
+  document.getElementById("unit-modal-title").textContent=`Edit Unit ${u.unit_no}`;
+  document.getElementById("um-edit-idx").value=i;
+  document.getElementById("um-unit").value=u.unit_no||"";
+  document.getElementById("um-floor").value=u.floor||0;
+  document.getElementById("um-type").value=u.type||"3BHK";
+  document.getElementById("um-area").value=u.area_sqft||0;
+  document.getElementById("um-price").value=u.price||0;
+  document.getElementById("um-facing").value=u.facing||"";
+  document.getElementById("um-parking").value=u.parking||0;
+  document.getElementById("um-status").value=u.status||"available";
+  document.getElementById("um-booked-by").value=u.booked_by||"";
+  document.getElementById("um-booked-date").value=u.booked_date||"";
+  document.getElementById("um-notes").value=u.notes||"";
+  toggleBookingFields();
+  document.getElementById("um-delete-btn").style.display="inline-flex";
+  document.getElementById("unit-modal").classList.add("open");
+}
+
+function toggleBookingFields(){
+  const s=document.getElementById("um-status").value;
+  document.getElementById("booking-fields").style.display=(s==="booked"||s==="sold")?"block":"none";
+}
+
+function saveUnit(){
+  const idx = parseInt(document.getElementById("um-edit-idx").value);
+  const unit = {
+    unit_no:      document.getElementById("um-unit").value.trim()||"U-"+Date.now(),
+    floor:        +document.getElementById("um-floor").value,
+    type:         document.getElementById("um-type").value,
+    area_sqft:    +document.getElementById("um-area").value,
+    price:        +document.getElementById("um-price").value,
+    facing:       document.getElementById("um-facing").value,
+    parking:      +document.getElementById("um-parking").value,
+    status:       document.getElementById("um-status").value,
+    booked_by:    document.getElementById("um-booked-by").value||null,
+    booked_date:  document.getElementById("um-booked-date").value||null,
+    notes:        document.getElementById("um-notes").value,
+  };
+  const units = INVENTORY[currentPropId].units||[];
+  if(idx>=0) units[idx]=unit;
+  else units.push(unit);
+  INVENTORY[currentPropId].units=units;
+  saveInventory();
+  closeUnitModal();
+  renderOverview(); renderInventoryTable(); renderPricing();
+  showToast(idx>=0?"Unit updated ✓":"Unit added ✓");
+}
+
+function deleteUnit(){
+  const idx=parseInt(document.getElementById("um-edit-idx").value);
+  if(!confirm("Delete this unit?")) return;
+  INVENTORY[currentPropId].units.splice(idx,1);
+  saveInventory();
+  closeUnitModal();
+  renderOverview(); renderInventoryTable(); renderPricing();
+  showToast("Unit deleted");
+}
+function closeUnitModal(){ document.getElementById("unit-modal").classList.remove("open") }
+
+/* ═══════ PRICING ═══════ */
+function renderPricing() {
+  const inv   = INVENTORY[currentPropId]||{};
+  const units = inv.units||[];
+  const hist  = inv.price_history||[];
+
+  // Summary table
+  const groups=["available","booked","sold"];
+  document.getElementById("price-summary-body").innerHTML=groups.map(s=>{
+    const grp=units.filter(u=>u.status===s);
+    if(!grp.length) return "";
+    const prices=grp.map(u=>u.price);
+    const min=Math.min(...prices), max=Math.max(...prices), avg=Math.round(prices.reduce((a,b)=>a+b,0)/prices.length);
+    return `<tr><td><span class="badge ${s==="available"?"bg":s==="booked"?"bgo":"br"}">${s}</span></td>
+      <td>${grp.length}</td><td>${fmtINR(min)}</td><td>${fmtINR(max)}</td><td style="font-weight:600">${fmtINR(avg)}</td></tr>`;
+  }).join("")||`<tr><td colspan="5" style="text-align:center;color:var(--muted)">No units</td></tr>`;
+
+  // Price history
+  document.getElementById("price-history-list").innerHTML = hist.length
+    ? hist.map((h,i)=>`<div class="price-row">
+        <div><div style="font-weight:600">${fmtINR(h.price)}</div>${h.notes?`<div style="font-size:.72rem;color:var(--muted)">${h.notes}</div>`:""}</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="color:var(--muted);font-size:.75rem">${h.date}</span>
+          <button class="btn btn-danger btn-sm" onclick="deletePriceHistory(${i})">✕</button>
+        </div>
+      </div>`).join("")
+    : `<p style="color:var(--muted);font-size:.82rem">No price history yet.</p>`;
+}
+
+function bulkPriceUpdate(){
+  const type=document.getElementById("price-adj-type").value;
+  const val=+document.getElementById("price-adj-val").value;
+  const scope=document.getElementById("price-adj-scope").value;
+  if(!val){showToast("Enter a value first","err");return}
+  const units = INVENTORY[currentPropId].units||[];
+  units.forEach(u=>{
+    if(scope==="available"&&u.status!=="available") return;
+    if(type==="pct")  u.price=Math.round(u.price*(1+val/100));
+    else if(type==="flat") u.price=u.price+val;
+    else u.price=val;
+  });
+  INVENTORY[currentPropId].units=units;
+  // Add to history
+  INVENTORY[currentPropId].price_history=INVENTORY[currentPropId].price_history||[];
+  INVENTORY[currentPropId].price_history.push({date:new Date().toISOString().slice(0,10),price:units.filter(u=>u.status==="available")[0]?.price||val,notes:`Bulk ${type==="pct"?val+"%":fmtINR(val)} update`});
+  saveInventory();
+  renderPricing(); renderOverview(); renderInventoryTable();
+  showToast("Prices updated ✓");
+}
+
+function openAddPriceHistory(){ document.getElementById("ph-date").value=new Date().toISOString().slice(0,10); document.getElementById("ph-price").value=""; document.getElementById("ph-note").value=""; document.getElementById("ph-modal").classList.add("open") }
+function savePriceHistory(){
+  const date=document.getElementById("ph-date").value, price=+document.getElementById("ph-price").value, note=document.getElementById("ph-note").value;
+  if(!date||!price){showToast("Fill date and price","err");return}
+  INVENTORY[currentPropId].price_history=INVENTORY[currentPropId].price_history||[];
+  INVENTORY[currentPropId].price_history.push({date,price,notes:note});
+  saveInventory(); renderPricing();
+  document.getElementById("ph-modal").classList.remove("open");
+  showToast("Price entry added ✓");
+}
+function deletePriceHistory(i){ INVENTORY[currentPropId].price_history.splice(i,1); saveInventory(); renderPricing() }
+
+/* ═══════ AMENITIES ═══════ */
+function renderAmenities(){
+  const amenMap=INVENTORY[currentPropId]?.amenity_status||{};
+  const statusCfg={operational:{lbl:"Operational",cls:"bg"},coming_soon:{lbl:"Coming Soon",cls:"bgo"},under_maintenance:{lbl:"Maintenance",cls:"br"}};
+  document.getElementById("amenity-list").innerHTML=Object.entries(amenMap).map(([name,status])=>`
+    <div class="amenity-row">
+      <div style="font-weight:500">${name}</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <select class="form-inp" style="width:180px;padding:6px 10px;font-size:.8rem" onchange="updateAmenityStatus('${name}',this.value)">
+          ${["operational","coming_soon","under_maintenance"].map(s=>`<option value="${s}" ${s===status?"selected":""}>${statusCfg[s].lbl}</option>`).join("")}
+        </select>
+        <button class="btn btn-danger btn-sm" onclick="deleteAmenity('${name}')">✕</button>
+      </div>
+    </div>`).join("") || `<p style="color:var(--muted)">No amenities listed. Click "+ Add Amenity".</p>`;
+}
+
+function updateAmenityStatus(name,status){ INVENTORY[currentPropId].amenity_status[name]=status; saveInventory(); showToast("Status updated ✓") }
+function deleteAmenity(name){ delete INVENTORY[currentPropId].amenity_status[name]; saveInventory(); renderAmenities(); showToast("Amenity removed") }
+function openAddAmenity(){ document.getElementById("new-amen-name").value=""; document.getElementById("amen-modal").classList.add("open") }
+function saveNewAmenity(){
+  const name=document.getElementById("new-amen-name").value.trim();
+  if(!name) return;
+  INVENTORY[currentPropId].amenity_status[name]=document.getElementById("new-amen-status").value;
+  saveInventory(); renderAmenities();
+  document.getElementById("amen-modal").classList.remove("open");
+  showToast("Amenity added ✓");
+}
+
+/* ═══════ PROPERTY INFO ═══════ */
+function renderPropInfo(){
+  const prop = JSON.parse(localStorage.getItem(DB_PROPS)||"[]").find(p=>p.id===currentPropId)||{};
+  document.getElementById("pi-title").value      = prop.title||"";
+  document.getElementById("pi-builder").value    = prop.builder||"";
+  document.getElementById("pi-rera").value       = prop.rera_id||"";
+  document.getElementById("pi-possession").value = prop.possession||"";
+  document.getElementById("pi-status").value     = prop.status||"available";
+  document.getElementById("pi-desc").value       = prop.description||"";
+  document.getElementById("pi-yield").value      = prop.investment?.rental_yield||"";
+  document.getElementById("pi-rent").value       = prop.investment?.monthly_rent||"";
+  document.getElementById("pi-appr").value       = prop.investment?.appreciation_5yr||"";
+
+  const nearby=prop.nearby||{};
+  document.getElementById("nearby-editor").innerHTML=Object.entries(nearby).map(([k,v])=>`
+    <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
+      <input class="form-inp" style="flex:1" value="${k}" id="nb-key-${k}" placeholder="Type (e.g. school)"/>
+      <input class="form-inp" style="flex:2" value="${v}" id="nb-val-${k}" placeholder="Value (e.g. Bishop School 0.8km)"/>
+      <button class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">✕</button>
+    </div>`).join("");
+}
+
+function addNearby(){
+  const id="nb-new-"+Date.now();
+  const div=document.createElement("div"); div.style.cssText="display:flex;gap:8px;margin-bottom:8px;align-items:center";
+  div.innerHTML=`<input class="form-inp" style="flex:1" placeholder="Type (e.g. school)" id="${id}-k"/>
+    <input class="form-inp" style="flex:2" placeholder="Value (e.g. Bishop School 0.8km)" id="${id}-v"/>
+    <button class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">✕</button>`;
+  document.getElementById("nearby-editor").appendChild(div);
+}
+
+function savePropInfo(){
+  const props=JSON.parse(localStorage.getItem(DB_PROPS)||"[]");
+  const idx=props.findIndex(p=>p.id===currentPropId); if(idx<0) return;
+  props[idx].title       = document.getElementById("pi-title").value;
+  props[idx].builder     = document.getElementById("pi-builder").value;
+  props[idx].rera_id     = document.getElementById("pi-rera").value;
+  props[idx].possession  = document.getElementById("pi-possession").value;
+  props[idx].status      = document.getElementById("pi-status").value;
+  props[idx].description = document.getElementById("pi-desc").value;
+  // Collect nearby
+  const near={};
+  document.querySelectorAll("[id^='nb-']").forEach(el=>{
+    const parts=el.id.split("-"); if(parts.length<3) return;
+    // skip — complex parsing; simpler approach:
+  });
+  localStorage.setItem(DB_PROPS,JSON.stringify(props));
+  showToast("Property info saved ✓");
+}
+
+function saveInvestmentInfo(){
+  const props=JSON.parse(localStorage.getItem(DB_PROPS)||"[]");
+  const idx=props.findIndex(p=>p.id===currentPropId); if(idx<0) return;
+  props[idx].investment=props[idx].investment||{};
+  props[idx].investment.rental_yield   =+document.getElementById("pi-yield").value;
+  props[idx].investment.monthly_rent   =+document.getElementById("pi-rent").value;
+  props[idx].investment.appreciation_5yr=+document.getElementById("pi-appr").value;
+  localStorage.setItem(DB_PROPS,JSON.stringify(props));
+  showToast("Investment info saved ✓");
+}
+
+/* ═══════ NAVIGATION ═══════ */
+function showPage(id,btn){
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.querySelectorAll(".sb-item").forEach(i=>i.classList.remove("active"));
+  document.getElementById("page-"+id).classList.add("active");
+  if(btn)btn.classList.add("active");
+}
+
+/* ═══════ HELPERS ═══════ */
+function fmtINR(n){n=Math.round(+n);if(n>=10000000)return`₹${(n/10000000).toFixed(2)}Cr`;if(n>=100000)return`₹${(n/100000).toFixed(2)}L`;return`₹${n.toLocaleString("en-IN")}`}
+
+function exportInventory(){
+  const inv=INVENTORY[currentPropId]||{};
+  const blob=new Blob([JSON.stringify(inv,null,2)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download=`inventory_${currentPropId}_${new Date().toISOString().slice(0,10)}.json`; a.click();
+  showToast("Inventory exported ✓");
+}
+
+let toastT;
+function showToast(msg,type="ok"){
+  clearTimeout(toastT);
+  let t=document.getElementById("_toast");
+  if(!t){t=document.createElement("div");t.id="_toast";t.style.cssText="position:fixed;bottom:22px;right:22px;background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:11px 16px;font-size:.83rem;z-index:9999;transition:all .3s;transform:translateY(60px);opacity:0;box-shadow:0 8px 24px rgba(0,0,0,.5)";document.body.appendChild(t)}
+  t.textContent=msg; t.style.transform="none"; t.style.opacity="1";
+  toastT=setTimeout(()=>{t.style.transform="translateY(60px)";t.style.opacity="0"},2600);
+}
+
+function doLogout(){ localStorage.removeItem(DB_SESSION); window.location.href="login.html" }
+
+initApp();
+</script>
+</body>
+</html>

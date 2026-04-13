@@ -1,0 +1,83 @@
+{
+  "admin": {
+    "username": "admin",
+    "password": "Admin@PropSense123",
+    "name": "PropSense Administrator",
+    "email": "admin@propsense.ai",
+    "phone": "+91-9876543210",
+    "company": "PropSense Realty Pvt. Ltd.",
+    "setup_date": "2025-01-01",
+    "logo_text": "PropSense AI"
+  },
+  "property_managers": [
+    {
+      "id": "PM001",
+      "username": "manager_prop001",
+      "password": "Prop001@Mgr",
+      "name": "Raj Sharma",
+      "email": "raj@koregaonpark.com",
+      "phone": "+91-9811223344",
+      "property_ids": ["PROP001"],
+      "role": "property_manager"
+    },
+    {
+      "id": "PM002",
+      "username": "manager_prop002",
+      "password": "Prop002@Mgr",
+      "name": "Priya Patel",
+      "email": "priya@banerrealty.com",
+      "phone": "+91-9822334455",
+      "property_ids": ["PROP002"],
+      "role": "property_manager"
+    },
+    {
+      "id": "PM003",
+      "username": "manager_prop003",
+      "password": "Prop003@Mgr",
+      "name": "Amit Kulkarni",
+      "email": "amit@hinjewadi.com",
+      "phone": "+91-9833445566",
+      "property_ids": ["PROP003"],
+      "role": "property_manager"
+    },
+    {
+      "id": "PM004",
+      "username": "manager_prop004",
+      "password": "Prop004@Mgr",
+      "name": "Sneha Mehta",
+      "email": "sneha@lodha.com",
+      "phone": "+91-9844556677",
+      "property_ids": ["PROP004"],
+      "role": "property_manager"
+    },
+    {
+      "id": "PM005",
+      "username": "manager_prop005",
+      "password": "Prop005@Mgr",
+      "name": "Vivek Nair",
+      "email": "vivek@prestige.com",
+      "phone": "+91-9855667788",
+      "property_ids": ["PROP005", "PROP006"],
+      "role": "property_manager"
+    },
+    {
+      "id": "PM006",
+      "username": "manager_multi",
+      "password": "Multi@Mgr456",
+      "name": "Deepak Joshi",
+      "email": "deepak@propsense.ai",
+      "phone": "+91-9866778899",
+      "property_ids": ["PROP007", "PROP008", "PROP009", "PROP010", "PROP011", "PROP012"],
+      "role": "property_manager"
+    }
+  ],
+  "settings": {
+    "site_name": "PropSense AI",
+    "allow_public_signup": true,
+    "require_email_verify": false,
+    "session_timeout_hours": 24,
+    "max_login_attempts": 5,
+    "currency": "INR",
+    "cities_served": ["Mumbai","Pune","Bangalore","Hyderabad","Chennai","Delhi","Kolkata","Ahmedabad","Jaipur","Surat"]
+  }
+}
