@@ -371,7 +371,6 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
     <div class="nav-section">Properties</div>
     <button class="nav-item" onclick="showSection('listings',this)"><span class="icon">🏠</span>Browse Listings<span class="nav-badge" id="listing-count">12</span></button>
     <button class="nav-item" onclick="showSection('recommend',this)"><span class="icon">🔍</span>Recommendations</button>
-    <button class="nav-item" onclick="showSection('data-manager',this)"><span class="icon">✏️</span>Data Manager</button>
 
     <div class="nav-section">AI Tools</div>
     <button class="nav-item" onclick="showSection('predict',this)"><span class="icon">🏷️</span>Price Prediction</button>
@@ -504,7 +503,40 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
     <div class="card"><div class="card-header"><div class="card-title">ML Model Accuracy Comparison</div></div><div class="chart-wrap"><canvas id="modelChart"></canvas></div></div>
     <div class="card"><div class="card-header"><div class="card-title">5-Year Price Trend — Top Cities</div></div><div class="chart-wrap"><canvas id="trendChart"></canvas></div></div>
   </div>
+
+  <!-- 🔥 HOTTEST PROPERTY BANNER -->
+  <div id="hottest-banner" style="display:none;background:linear-gradient(135deg,rgba(255,107,107,.1),rgba(245,200,66,.08));border:1px solid rgba(255,107,107,.3);border-radius:16px;padding:24px 28px;margin-top:4px;cursor:pointer" onclick="openHottestProperty()">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px">
+      <div style="display:flex;align-items:center;gap:16px">
+        <div style="font-size:2.4rem;animation:pulse 1.5s ease-in-out infinite">🔥</div>
+        <div>
+          <div style="font-size:.7rem;color:var(--accent3);text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:4px">🔥 Hottest Property Right Now</div>
+          <div style="font-family:Syne,sans-serif;font-size:1.3rem;font-weight:800" id="hot-prop-title">Loading…</div>
+          <div style="font-size:.8rem;color:var(--muted);margin-top:3px" id="hot-prop-meta"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:24px;align-items:center;flex-shrink:0">
+        <div style="text-align:center">
+          <div style="font-family:Syne,sans-serif;font-size:1.6rem;font-weight:800;color:var(--accent3)" id="hot-prop-views">0</div>
+          <div style="font-size:.7rem;color:var(--muted)">Total Views</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-family:Syne,sans-serif;font-size:1.6rem;font-weight:800;color:var(--gold)" id="hot-prop-price">—</div>
+          <div style="font-size:.7rem;color:var(--muted)">Listed Price</div>
+        </div>
+        <button class="btn btn-sm" style="background:linear-gradient(135deg,var(--accent3),var(--gold));color:#fff;border:none">View Property →</button>
+      </div>
+    </div>
+    <!-- view bar -->
+    <div style="margin-top:16px">
+      <div style="font-size:.7rem;color:var(--muted);margin-bottom:6px">View distribution across top 5 properties</div>
+      <div id="hot-view-bars" style="display:flex;flex-direction:column;gap:5px"></div>
+    </div>
+  </div>
 </section>
+<style>
+@keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.15)} }
+</style>
 
 <!-- ═══════ BROWSE LISTINGS ═══════ -->
 <section id="listings" class="section">
@@ -567,11 +599,9 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
 <!-- ═══════ DATA MANAGER ═══════ -->
 <section id="data-manager" class="section">
   <div class="page-header">
-    <div><h2>Data Manager</h2><p>Add, edit, or remove property listings — changes are saved to browser storage</p></div>
+    <div><h2>📋 Property Listings (View Only)</h2><p>Browse all listed properties — contact admin to add or edit listings</p></div>
     <div class="header-actions">
-      <button class="btn btn-success btn-sm" onclick="openAddModal()">➕ Add Property</button>
       <button class="btn btn-ghost btn-sm" onclick="exportData()">⬇️ Export JSON</button>
-      <button class="btn btn-ghost btn-sm" onclick="importData()">⬆️ Import JSON</button>
     </div>
   </div>
   <div class="card">
@@ -584,7 +614,7 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
     </div>
     <div style="overflow-x:auto">
       <table class="tbl" id="dm-table">
-        <thead><tr><th>ID</th><th>Title</th><th>City</th><th>Type</th><th>Beds</th><th>Area</th><th>Price</th><th>Status</th><th>Actions</th></tr></thead>
+        <thead><tr><th>ID</th><th>Title</th><th>City</th><th>Type</th><th>Beds</th><th>Area</th><th>Price</th><th>Status</th></tr></thead>
         <tbody id="dm-tbody"></tbody>
       </table>
     </div>
@@ -881,6 +911,7 @@ async function loadData() {
   calcEMI();
   updateEMIBanks();
   psInitBar();
+  renderHottestProperty();
 }
 
 /* ════════════════════════════════════════════════════════
@@ -1171,7 +1202,7 @@ function renderDataTable() {
     return match && cityOk;
   });
   document.getElementById("dm-count").textContent = `${filtered.length} / ${PROPERTIES.length} properties`;
-  document.getElementById("dm-tbody").innerHTML = filtered.map(p=>`<tr>
+  document.getElementById("dm-tbody").innerHTML = filtered.map(p=>`<tr style="cursor:pointer" onclick='openPropertyModal(${JSON.stringify(p).replace(/'/g,"&#39;")})'>
     <td><code style="color:var(--accent);font-size:.75rem">${p.id}</code></td>
     <td style="font-weight:600">${p.title}</td>
     <td>${p.city}</td>
@@ -1180,10 +1211,6 @@ function renderDataTable() {
     <td>${p.area_sqft?.toLocaleString()} sqft</td>
     <td style="font-weight:600;color:var(--accent2)">${fmtINRShort(p.price)}</td>
     <td><span class="badge ${p.status==="available"?"badge-green":"badge-red"}">${p.status}</span></td>
-    <td style="white-space:nowrap">
-      <button class="btn btn-ghost btn-sm" onclick="editProperty('${p.id}');event.stopPropagation()">✏️</button>
-      <button class="btn btn-danger btn-sm" style="margin-left:4px" onclick="deleteProperty('${p.id}');event.stopPropagation()">🗑</button>
-    </td>
   </tr>`).join("");
 }
 
@@ -1951,6 +1978,85 @@ function saveProfile() {
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ closeProfileModal(); closeShortlistDrawer(); } });
 /* ════════════════════════════════════════════════════ */
 
+
+
+/* ════════════════════════════════════════════════════════
+   HOTTEST PROPERTY — based on most views from ps_events
+════════════════════════════════════════════════════════ */
+let _hottestProp = null;
+
+function computeHottestProperty() {
+  const events = JSON.parse(localStorage.getItem("ps_events")||"[]");
+  // Count views per property (only property_view events)
+  const viewMap = {};
+  events.filter(e => e.type === "property_view" && e.data?.prop_id).forEach(e => {
+    viewMap[e.data.prop_id] = (viewMap[e.data.prop_id]||0) + 1;
+  });
+  if (!Object.keys(viewMap).length) {
+    // No real views yet — use the property with most shortlists or first one
+    const users = JSON.parse(localStorage.getItem("ps_users")||"[]");
+    const slMap = {};
+    users.forEach(u => (u.shortlisted||[]).forEach(id => slMap[id]=(slMap[id]||0)+1));
+    if (Object.keys(slMap).length) {
+      const topId = Object.entries(slMap).sort((a,b)=>b[1]-a[1])[0][0];
+      viewMap[topId] = slMap[topId];
+    }
+  }
+  return viewMap;
+}
+
+function renderHottestProperty() {
+  const viewMap = computeHottestProperty();
+  const banner  = document.getElementById("hottest-banner");
+  if (!banner) return;
+
+  if (!Object.keys(viewMap).length) {
+    // No views yet — show placeholder with most listings
+    banner.style.display = "block";
+    document.getElementById("hot-prop-title").textContent = "Start browsing to discover the hottest property!";
+    document.getElementById("hot-prop-meta").textContent  = "Views will be tracked as users explore listings";
+    document.getElementById("hot-prop-views").textContent = "0";
+    document.getElementById("hot-prop-price").textContent = "—";
+    document.getElementById("hot-view-bars").innerHTML = "";
+    _hottestProp = null;
+    return;
+  }
+
+  // Sort by views
+  const sorted = Object.entries(viewMap).sort((a,b)=>b[1]-a[1]);
+  const topId  = sorted[0][0];
+  const topP   = PROPERTIES.find(p => p.id === topId);
+  if (!topP) return;
+
+  _hottestProp = topP;
+  banner.style.display = "block";
+
+  document.getElementById("hot-prop-title").textContent = topP.title;
+  document.getElementById("hot-prop-meta").textContent  = `${topP.locality}, ${topP.city} · ${topP.bedrooms}BHK · ${topP.property_type}`;
+  document.getElementById("hot-prop-views").textContent = sorted[0][1];
+  document.getElementById("hot-prop-price").textContent = fmtINRShort(topP.price);
+
+  // View bars for top 5
+  const maxViews = sorted[0][1];
+  const top5     = sorted.slice(0, 5);
+  document.getElementById("hot-view-bars").innerHTML = top5.map(([id, cnt]) => {
+    const p   = PROPERTIES.find(x => x.id === id);
+    const lbl = p ? p.title.slice(0, 32) + (p.title.length > 32 ? "…" : "") : id;
+    const pct = Math.round(cnt / maxViews * 100);
+    const isTop = id === topId;
+    return `<div style="display:flex;align-items:center;gap:10px;font-size:.75rem">
+      <div style="width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:${isTop?"var(--accent3)":"var(--muted)"};font-weight:${isTop?700:400}">${lbl}</div>
+      <div style="flex:1;background:rgba(255,255,255,.06);border-radius:4px;height:7px;overflow:hidden">
+        <div style="width:${pct}%;height:7px;border-radius:4px;background:${isTop?"linear-gradient(90deg,var(--accent3),var(--gold))":"var(--accent)"};transition:width .8s ease"></div>
+      </div>
+      <div style="width:32px;text-align:right;color:var(--muted)">${cnt}</div>
+    </div>`;
+  }).join("");
+}
+
+function openHottestProperty() {
+  if (_hottestProp) openPropertyModal(_hottestProp);
+}
 
 loadData();
 </script>

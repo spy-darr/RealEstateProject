@@ -107,6 +107,14 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);min
 .creds-table tr:last-child td{border:none}
 .tag{background:var(--surface3);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:.72rem;font-family:monospace;color:var(--accent2)}
 @media(max-width:900px){.stats-grid{grid-template-columns:1fr 1fr}.grid-2,.grid-3{grid-template-columns:1fr}}
+
+/* Activity filter buttons */
+.act-filter-btn{background:var(--surface2);border:1px solid var(--border);color:var(--muted);
+  border-radius:20px;padding:4px 13px;font-size:.75rem;cursor:pointer;font-family:inherit;
+  transition:all .18s;white-space:nowrap}
+.act-filter-btn:hover{color:var(--text);border-color:var(--border2)}
+.act-filter-btn.active{background:rgba(108,71,255,.15);border-color:rgba(108,71,255,.4);color:#a78bfa}
+
 </style>
 </head>
 <body>
@@ -165,6 +173,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);min
     <div class="card"><div class="card-header"><div class="card-title">Top Viewed Properties</div></div><div id="top-props"></div></div>
     <div class="card"><div class="card-header"><div class="card-title">City-wise Interest</div></div><div class="chart-wrap"><canvas id="cityChart"></canvas></div></div>
   </div>
+  <!-- Hottest Property Admin Card -->
+  <div id="admin-hottest-card" class="card" style="background:linear-gradient(135deg,rgba(255,107,107,.08),rgba(245,200,66,.05));border-color:rgba(255,107,107,.25)">
+    <div class="card-header" style="margin-bottom:12px">
+      <div class="card-title" style="display:flex;align-items:center;gap:8px">🔥 Hottest Property <span style="font-family:DM Sans,sans-serif;font-size:.75rem;color:var(--muted);font-weight:400">(most views from all users)</span></div>
+    </div>
+    <div id="admin-hottest-body" style="color:var(--muted);font-size:.85rem">Loading…</div>
+  </div>
 </section>
 
 <!-- ═══ HOT LEADS ═══ -->
@@ -210,11 +225,35 @@ body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);min
 
 <!-- ═══ ACTIVITY LOG ═══ -->
 <section id="activity" class="section">
-  <div class="page-header"><div><h2>Activity Log</h2><p>All user actions tracked in real-time</p></div>
-    <button class="btn btn-ghost btn-sm" onclick="clearActivity()">🗑 Clear Log</button>
+  <div class="page-header"><div><h2>Activity Log</h2><p>Property engagement tracked in real-time — login/logout excluded</p></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm" onclick="clearActivity()">🗑 Clear</button>
+      <button class="btn btn-ghost btn-sm" onclick="exportActivityCSV()">⬇️ Export</button>
+    </div>
+  </div>
+  <!-- Filters -->
+  <div class="card" style="padding:14px 18px;margin-bottom:14px">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <span style="font-size:.75rem;color:var(--muted);font-weight:600">Filter:</span>
+      <button class="act-filter-btn active" data-type="all"     onclick="setActFilter('all',this)">All Activity</button>
+      <button class="act-filter-btn"        data-type="property_view" onclick="setActFilter('property_view',this)">👁 Views</button>
+      <button class="act-filter-btn"        data-type="search"  onclick="setActFilter('search',this)">🔍 Searches</button>
+      <button class="act-filter-btn"        data-type="shortlist" onclick="setActFilter('shortlist',this)">❤️ Shortlists</button>
+      <button class="act-filter-btn"        data-type="prediction" onclick="setActFilter('prediction',this)">🏷️ Predictions</button>
+      <button class="act-filter-btn"        data-type="user_signup" onclick="setActFilter('user_signup',this)">✨ Signups</button>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+        <input type="text" id="act-search" placeholder="Search user or property…" oninput="renderActivity(getEvents())"
+          style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:8px;font-size:.8rem;width:200px"/>
+        <select id="act-user-filter" onchange="renderActivity(getEvents())"
+          style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:8px;font-size:.8rem">
+          <option value="">All Users</option>
+        </select>
+      </div>
+    </div>
   </div>
   <div class="card">
-    <div style="max-height:600px;overflow-y:auto">
+    <div id="act-count" style="font-size:.78rem;color:var(--muted);margin-bottom:10px"></div>
+    <div style="max-height:560px;overflow-y:auto">
       <div class="timeline" id="activity-log"></div>
     </div>
   </div>
@@ -320,6 +359,65 @@ let AUTH_CONFIG = null;
 let PROPERTIES  = [];
 let INVENTORY   = {};
 
+
+/* ════ HOTTEST PROPERTY (admin) ════ */
+function renderHottestPropertyAdmin() {
+  const events = JSON.parse(localStorage.getItem("ps_events")||"[]");
+  const viewMap = {};
+  events.filter(e=>e.type==="property_view"&&e.data?.prop_id).forEach(e=>{
+    viewMap[e.data.prop_id] = (viewMap[e.data.prop_id]||0) + 1;
+  });
+
+  const el = document.getElementById("admin-hottest-body");
+  if (!el) return;
+
+  const props = getAllProperties();
+
+  if (!Object.keys(viewMap).length) {
+    el.innerHTML = `<div style="color:var(--muted);font-size:.85rem">No property views tracked yet. Share the platform with buyers to see data here.</div>`;
+    return;
+  }
+
+  const sorted = Object.entries(viewMap).sort((a,b)=>b[1]-a[1]);
+  const topId   = sorted[0][0];
+  const topProp = props.find(p=>p.id===topId);
+  const topViews = sorted[0][1];
+
+  // unique viewers
+  const uniqueViewers = [...new Set(
+    events.filter(e=>e.type==="property_view"&&e.data?.prop_id===topId).map(e=>e.data?.user_id)
+  )].length;
+
+  el.innerHTML = `
+    <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start">
+      <div style="flex:1;min-width:220px">
+        <div style="font-family:Syne,sans-serif;font-size:1.15rem;font-weight:800;margin-bottom:4px">${topProp?.title||topId}</div>
+        <div style="font-size:.8rem;color:var(--muted);margin-bottom:12px">${topProp?.city||""} · ${topProp?.property_type||""} · ${topProp?.bedrooms||""}BHK</div>
+        <div style="display:flex;gap:20px">
+          <div><div style="font-family:Syne,sans-serif;font-size:1.5rem;font-weight:800;color:var(--accent3)">${topViews}</div><div style="font-size:.68rem;color:var(--muted)">Total Views</div></div>
+          <div><div style="font-family:Syne,sans-serif;font-size:1.5rem;font-weight:800;color:var(--gold)">${uniqueViewers}</div><div style="font-size:.68rem;color:var(--muted)">Unique Viewers</div></div>
+          <div><div style="font-family:Syne,sans-serif;font-size:1.5rem;font-weight:800;color:var(--accent2)">${topProp?fmtINR(topProp.price):"—"}</div><div style="font-size:.68rem;color:var(--muted)">Listed Price</div></div>
+        </div>
+      </div>
+      <div style="flex:1;min-width:200px">
+        <div style="font-size:.72rem;color:var(--muted);margin-bottom:8px;font-weight:600">TOP 5 MOST VIEWED</div>
+        ${sorted.slice(0,5).map(([id,cnt],i)=>{
+          const p = props.find(x=>x.id===id);
+          const pct = Math.round(cnt/topViews*100);
+          return `<div style="margin-bottom:7px">
+            <div style="display:flex;justify-content:space-between;font-size:.76rem;margin-bottom:3px">
+              <span style="color:${i===0?"var(--accent3)":"var(--text)"};font-weight:${i===0?700:400}">${p?.title?.slice(0,30)||id}</span>
+              <span style="color:var(--muted)">${cnt} views</span>
+            </div>
+            <div style="background:rgba(255,255,255,.06);border-radius:3px;height:5px">
+              <div style="width:${pct}%;height:5px;border-radius:3px;background:${i===0?"linear-gradient(90deg,var(--accent3),var(--gold))":"var(--accent)"}"></div>
+            </div>
+          </div>`;
+        }).join("")}
+      </div>
+    </div>`;
+}
+
 async function boot() {
   // Update admin name in sidebar
   document.getElementById("admin-name").textContent = SESSION.name || "Admin";
@@ -354,6 +452,7 @@ function renderAll() {
   renderManagers();
   renderCharts(scored, events);
   renderOnboarding();
+  renderHottestPropertyAdmin();
 
   document.getElementById("hot-count").textContent   = scored.filter(u=>u.score>=70).length;
   document.getElementById("user-count-badge").textContent = scored.length;
@@ -552,7 +651,7 @@ function openUserModal(userId) {
     </div>
 
     <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--border);display:flex;gap:10px">
-      <button class="btn btn-ghost btn-sm" onclick="copyContact('${u.email}','${u.phone||""}')">📋 Copy Contact</button>
+      <button class="btn btn-ghost btn-sm" onclick="copyContact('${u.id}')">📋 Copy Contact</button>
       <button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}')">🗑 Delete User</button>
     </div>`;
 
@@ -565,9 +664,46 @@ function closeUserModal() {
   document.body.style.overflow = "";
 }
 
-function copyContact(email, phone) {
-  const text = `Email: ${email}\nPhone: ${phone||"N/A"}`;
-  navigator.clipboard.writeText(text).then(()=>showToast("Contact copied!","success")).catch(()=>showToast("Copy failed","error"));
+function copyContact(userId) {
+  const users  = getUsers();
+  const events = getEvents();
+  const scored = scoreUsers(users, events);
+  const u = scored.find(x=>x.id===userId) || users.find(x=>x.id===userId);
+  if (!u) { showToast("User not found","error"); return; }
+
+  const budgetLabel = formatBudget(u.budget);
+  const intentLabel = formatIntent(u.intent);
+  const bedsLabel   = u.pref_beds ? u.pref_beds + " BHK" : "Not specified";
+  const viewedList  = (u.viewed_properties||[]).map(id=>{
+    const p = getAllProperties().find(x=>x.id===id);
+    return p ? p.title : id;
+  }).slice(0,5).join(", ") || "None";
+
+  const text = [
+    "=== LEAD CONTACT DETAILS ===",
+    `Name:         ${u.name || (u.fname+" "+u.lname).trim() || "—"}`,
+    `Email:        ${u.email || "—"}`,
+    `Phone:        ${u.phone || "Not provided"}`,
+    `City:         ${u.city || "Not set"}`,
+    `Budget:       ${budgetLabel}`,
+    `Configuration:${bedsLabel}`,
+    `Intent:       ${intentLabel}`,
+    `Lead Score:   ${u.score || "—"} (${u.tier || "—"})`,
+    `Properties Viewed: ${(u.viewed_properties||[]).length}`,
+    `Recent Views: ${viewedList}`,
+    `Member Since: ${u.created_at ? new Date(u.created_at).toLocaleDateString("en-IN") : "—"}`,
+    "===========================",
+  ].join("\n");
+
+  navigator.clipboard.writeText(text)
+    .then(()=>showToast("✓ Full contact details copied!","success"))
+    .catch(()=>{ prompt("Copy this:", text); });
+}
+
+function getAllProperties() {
+  try {
+    return JSON.parse(localStorage.getItem("props_v2")||"[]");
+  } catch(e) { return []; }
 }
 
 function deleteUser(id) {
@@ -580,20 +716,109 @@ function deleteUser(id) {
 }
 
 /* ════ ACTIVITY LOG ════ */
+let _actFilter = "all";
+
+function setActFilter(type, btn) {
+  _actFilter = type;
+  document.querySelectorAll(".act-filter-btn").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  renderActivity(getEvents());
+}
+
 function renderActivity(events) {
-  const sorted = [...events].sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp)).slice(0,100);
-  const icons  = { user_login:"🔑", user_signup:"✨", property_view:"👁", search:"🔍", shortlist:"❤️", unshortlist:"💔", prediction:"🏷️", profile_update:"✏️", budget_update:"💰", admin_login:"👑", manager_login:"🏢", inventory_update:"📦" };
-  document.getElementById("activity-log").innerHTML = sorted.map(e=>{
-    const icon = icons[e.type] || "📌";
-    return `<div class="tl-item">
-      <div class="tl-dot view">${icon}</div>
-      <div>
-        <div style="font-weight:500">${formatEventType(e.type)}</div>
-        <div style="color:var(--muted);font-size:.72rem">${JSON.stringify(e.data).slice(0,80)}</div>
-        <div style="color:var(--muted);font-size:.68rem;margin-top:2px">${timeAgo(e.ts || e.timestamp)}</div>
+  // SKIP login/logout events — only show property engagement
+  const SKIP_TYPES = ["user_login","user_logout","admin_login","manager_login"];
+  const icons = { user_signup:"✨", property_view:"👁", search:"🔍", shortlist:"❤️",
+    unshortlist:"💔", prediction:"🏷️", profile_update:"✏️", inventory_update:"📦" };
+  const dotColor = { user_signup:"view", property_view:"view", search:"search",
+    shortlist:"shortlist", prediction:"budget" };
+
+  // Apply filters
+  const typeFilter = _actFilter;
+  const textFilter = (document.getElementById("act-search")?.value||"").toLowerCase();
+  const userFilter = document.getElementById("act-user-filter")?.value||"";
+
+  let filtered = [...events]
+    .filter(e => !SKIP_TYPES.includes(e.type))           // no auth events
+    .filter(e => typeFilter === "all" || e.type === typeFilter)
+    .filter(e => {
+      if (!textFilter) return true;
+      const str = JSON.stringify(e.data).toLowerCase();
+      return str.includes(textFilter);
+    })
+    .filter(e => !userFilter || e.data?.user_id === userFilter)
+    .sort((a,b) => new Date(b.timestamp||b.ts) - new Date(a.timestamp||a.ts))
+    .slice(0, 150);
+
+  // Populate user filter dropdown once
+  const userSel = document.getElementById("act-user-filter");
+  if (userSel && userSel.options.length <= 1) {
+    const users = getUsers();
+    users.forEach(u => {
+      const opt = document.createElement("option");
+      opt.value = u.id; opt.textContent = u.name || u.email;
+      userSel.appendChild(opt);
+    });
+  }
+
+  const countEl = document.getElementById("act-count");
+  if (countEl) countEl.textContent = `Showing ${filtered.length} events`;
+
+  document.getElementById("activity-log").innerHTML = filtered.map(e=>{
+    const icon     = icons[e.type] || "📌";
+    const dotCls   = dotColor[e.type] || "view";
+    const user     = getUsers().find(u=>u.id===e.data?.user_id);
+    const userName = e.data?.uname || user?.name || "Unknown";
+    // Build readable description
+    let desc = "";
+    if (e.type === "property_view") desc = `Viewed: ${e.data?.title||e.data?.prop_id||"—"}`;
+    else if (e.type === "search")   desc = `Searched: city=${e.data?.city||"any"}, type=${e.data?.type||"any"}, budget=${e.data?.budget||"any"}`;
+    else if (e.type === "shortlist") desc = `Shortlisted: ${e.data?.title||e.data?.prop_id||"—"}`;
+    else if (e.type === "unshortlist") desc = `Removed shortlist: ${e.data?.title||e.data?.prop_id||"—"}`;
+    else if (e.type === "prediction") desc = `AI prediction: ${e.data?.city||""} ${e.data?.type||""} ${e.data?.beds||""}BHK ${e.data?.area||""}sqft`;
+    else if (e.type === "user_signup") desc = `New signup: ${e.data?.email||"—"} · City: ${e.data?.city||"—"}`;
+    else if (e.type === "profile_update") desc = `Updated preferences`;
+    else desc = JSON.stringify(e.data).slice(0,70);
+
+    return `<div class="tl-item" onclick="openUserByEvent('${e.data?.user_id||""}')" style="cursor:pointer">
+      <div class="tl-dot ${dotCls}">${icon}</div>
+      <div style="flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div>
+            <span style="font-weight:600">${formatEventType(e.type)}</span>
+            <span style="font-size:.72rem;color:var(--muted);margin-left:8px">by ${userName}</span>
+          </div>
+          <div style="font-size:.68rem;color:var(--muted);flex-shrink:0">${timeAgo(e.timestamp||e.ts)}</div>
+        </div>
+        <div style="color:var(--muted);font-size:.75rem;margin-top:2px">${desc}</div>
       </div>
     </div>`;
-  }).join("") || `<p style="color:var(--muted);padding:20px;text-align:center">No activity recorded yet.</p>`;
+  }).join("") || `<div style="text-align:center;padding:30px;color:var(--muted)">
+    <div style="font-size:1.5rem;margin-bottom:8px">📭</div>
+    <div>No ${typeFilter==="all"?"activity":"matching events"} yet.</div>
+  </div>`;
+}
+
+function openUserByEvent(userId) {
+  if (!userId) return;
+  const users = getUsers();
+  const events = getEvents();
+  const scored = scoreUsers(users, events);
+  const u = scored.find(x=>x.id===userId);
+  if (u) openUserModal(u.id);
+}
+
+function exportActivityCSV() {
+  const events = getEvents().filter(e => !["user_login","user_logout","admin_login","manager_login"].includes(e.type));
+  const csv = ["Type,User,Description,Time"]
+    .concat(events.map(e=>{
+      const u = getUsers().find(x=>x.id===e.data?.user_id);
+      return [e.type, u?.name||e.data?.uname||"", JSON.stringify(e.data).replace(/,/g,";"), e.timestamp||e.ts].join(",");
+    })).join("\n");
+  const blob = new Blob([csv],{type:"text/csv"});
+  const a = document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download="activity_log.csv"; a.click();
+  showToast("Activity exported","success");
 }
 
 function clearActivity() {
