@@ -500,8 +500,8 @@ function openUserModal(userId) {
     return `<div class="tl-item">
       <div class="tl-dot ${dotCls}">${icon}</div>
       <div><div style="font-weight:500">${formatEventType(e.type)}</div>
-        <div style="color:var(--muted);font-size:.72rem">${e.data?.title||e.data?.query||JSON.stringify(e.data).slice(0,60)}</div>
-        <div style="color:var(--muted);font-size:.68rem;margin-top:2px">${timeAgo(e.timestamp)}</div>
+        <div style="color:var(--muted);font-size:.72rem">${(e.type==='property_view'?(e.data?.title||'Unknown property')+(e.data?.city?' — '+e.data.city:''):e.type==='search'?('City: '+(e.data?.city||'Any')+' · Budget: '+(e.data?.budget||'Any')):e.type==='prediction'?((e.data?.city||'')+(e.data?.type?' '+e.data.type:'')+' '+e.data?.area+'sqft'):e.data?.title||e.data?.query||JSON.stringify(e.data).slice(0,70))}</div>
+        <div style="color:var(--muted);font-size:.68rem;margin-top:2px">${timeAgo(e.ts || e.timestamp)}</div>
       </div>
     </div>`;
   }).join("");
@@ -582,7 +582,7 @@ function deleteUser(id) {
 /* ════ ACTIVITY LOG ════ */
 function renderActivity(events) {
   const sorted = [...events].sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp)).slice(0,100);
-  const icons  = { user_login:"🔑", user_signup:"✨", property_view:"👁", search:"🔍", shortlist:"❤️", budget_update:"💰", admin_login:"👑", manager_login:"🏢" };
+  const icons  = { user_login:"🔑", user_signup:"✨", property_view:"👁", search:"🔍", shortlist:"❤️", unshortlist:"💔", prediction:"🏷️", profile_update:"✏️", budget_update:"💰", admin_login:"👑", manager_login:"🏢", inventory_update:"📦" };
   document.getElementById("activity-log").innerHTML = sorted.map(e=>{
     const icon = icons[e.type] || "📌";
     return `<div class="tl-item">
@@ -590,7 +590,7 @@ function renderActivity(events) {
       <div>
         <div style="font-weight:500">${formatEventType(e.type)}</div>
         <div style="color:var(--muted);font-size:.72rem">${JSON.stringify(e.data).slice(0,80)}</div>
-        <div style="color:var(--muted);font-size:.68rem;margin-top:2px">${timeAgo(e.timestamp)}</div>
+        <div style="color:var(--muted);font-size:.68rem;margin-top:2px">${timeAgo(e.ts || e.timestamp)}</div>
       </div>
     </div>`;
   }).join("") || `<p style="color:var(--muted);padding:20px;text-align:center">No activity recorded yet.</p>`;
@@ -828,9 +828,20 @@ function formatIntent(i) {
 }
 
 function formatEventType(t) {
-  return {user_login:"User Login",user_signup:"New Signup",property_view:"Property Viewed",
-    search:"Search Performed",shortlist:"Property Shortlisted",budget_update:"Budget Updated",
-    admin_login:"Admin Login",manager_login:"Manager Login"}[t] || t;
+  return {
+    user_login:      "User Login",
+    user_signup:     "New Signup ✨",
+    property_view:   "Property Viewed 👁",
+    search:          "Search Performed 🔍",
+    shortlist:       "Property Shortlisted ❤️",
+    unshortlist:     "Removed from Shortlist",
+    prediction:      "Price Prediction Run 🏷️",
+    budget_update:   "Budget Updated 💰",
+    profile_update:  "Profile Updated",
+    admin_login:     "Admin Login 👑",
+    manager_login:   "Manager Login 🏢",
+    inventory_update:"Inventory Updated",
+  }[t] || t;
 }
 
 function formatDate(d) {

@@ -15,14 +15,18 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 /* KEY FIX: html+body allow scroll, page wrapper handles layout */
-html { height: 100%; }
+html, body { 
+  height: auto; 
+  min-height: 100%; 
+}
 body {
   font-family: "DM Sans", sans-serif;
   background: var(--bg);
   color: var(--text);
-  min-height: 100%;
-  overflow-y: auto;
+  min-height: 100vh;
+  overflow-y: auto !important;
   overflow-x: hidden;
+  position: static !important;
 }
 
 /* Fixed decorative background — does NOT block scroll */

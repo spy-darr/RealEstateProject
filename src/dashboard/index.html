@@ -1,27 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script>
-/* AUTH GUARD - redirects before page renders */
-(function(){
-  try {
-    var s=localStorage.getItem("ps_session");
-    if(!s){window.location.replace("login.html");return;}
-    var sess=JSON.parse(s);
-    if(sess.role==="admin"){window.location.replace("admin.html");return;}
-    if(sess.role==="manager"){window.location.replace("property-manager.html");return;}
-    var hrs=(Date.now()-new Date(sess.session_start))/3600000;
-    if(hrs>24){localStorage.removeItem("ps_session");window.location.replace("login.html");return;}
-    window.__PS_SESSION=sess;
-  } catch(e){ window.location.replace("login.html"); }
-})();
-</script>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>PropSense AI — Real Estate Analytics Platform</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+/* AUTH GUARD — runs synchronously before page renders */
+(function(){
+  try {
+    var s = localStorage.getItem("ps_session");
+    if (!s) { window.location.replace("login.html"); return; }
+    var sess = JSON.parse(s);
+    if (sess.role === "admin")   { window.location.replace("admin.html"); return; }
+    if (sess.role === "manager") { window.location.replace("property-manager.html"); return; }
+    var hrs = (Date.now() - new Date(sess.session_start)) / 3600000;
+    if (hrs > 24) { localStorage.removeItem("ps_session"); window.location.replace("login.html"); return; }
+    window.__PS_SESSION = sess;
+  } catch(e) { window.location.replace("login.html"); }
+})();
+</script>
 <style>
 /* ══════════════ TOKENS ══════════════ */
 :root{
@@ -59,8 +59,7 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
 .sidebar-footer{padding:16px 22px;border-top:1px solid var(--border);font-size:.7rem;color:var(--muted);line-height:1.6}
 
 /* ══════════════ MAIN ══════════════ */
-.main{margin-left:248px;min-height:100vh;position:relative;z-index:1}
-.page-wrap{padding:36px 44px;max-width:1400px}
+/* .main and .page-wrap overridden by topbar CSS above */
 
 /* ══════════════ SECTIONS ══════════════ */
 .section{display:none}.section.active{display:block;animation:fadeIn .3s ease}
@@ -293,115 +292,70 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
 @media(max-width:1200px){.stats-grid{grid-template-columns:repeat(2,1fr)}.form-row{grid-template-columns:1fr 1fr}}
 @media(max-width:900px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr}.modal-specs{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:768px){.sidebar{display:none}.main{margin-left:0}.page-wrap{padding:20px 16px}}
-.main{padding-top:86px!important}
-@media(max-width:768px){#ps-topbar{left:0}}
+
+/* ══ USER TOPBAR ══ */
+.topbar{position:fixed;top:0;left:248px;right:0;height:50px;background:var(--surface);
+  border-bottom:1px solid var(--border);display:flex;align-items:center;
+  padding:0 20px 0 24px;gap:10px;z-index:150;box-sizing:border-box;}
+.topbar-left{flex-shrink:0;line-height:1.2}
+.topbar-left .greet{font-size:.65rem;color:var(--muted)}
+.topbar-left .uname{font-family:"Syne",sans-serif;font-size:.88rem;font-weight:700;color:var(--text)}
+.topbar-tags{display:flex;gap:5px;flex:1;overflow:hidden;align-items:center;flex-wrap:nowrap}
+.tb-tag{background:var(--surface2);border:1px solid var(--border);border-radius:20px;
+  padding:2px 9px;font-size:.7rem;color:var(--muted);white-space:nowrap;flex-shrink:0}
+.topbar-right{display:flex;gap:6px;align-items:center;flex-shrink:0;margin-left:auto}
+.tb-btn{background:var(--surface2);border:1px solid var(--border);color:var(--muted);
+  border-radius:8px;padding:5px 11px;font-size:.73rem;cursor:pointer;
+  font-family:inherit;white-space:nowrap;transition:all .18s}
+.tb-btn:hover{color:var(--text);border-color:var(--border2)}
+.tb-btn-danger{border-color:rgba(255,107,107,.25);color:var(--accent3)}
+.tb-btn-danger:hover{background:rgba(255,107,107,.08)}
+/* Page must push down to avoid topbar overlap */
+.main{margin-left:248px;min-height:100vh;position:relative;z-index:1;padding-top:50px}
+.page-wrap{padding:28px 44px;max-width:1400px}
+/* Shortlist drawer */
+.sl-drawer{position:fixed;top:50px;right:0;bottom:0;width:360px;max-width:90vw;
+  background:var(--surface);border-left:1px solid var(--border);z-index:490;
+  display:flex;flex-direction:column;overflow:hidden;
+  transform:translateX(100%);transition:transform .28s ease;
+  box-shadow:-8px 0 40px rgba(0,0,0,.5)}
+.sl-drawer.open{transform:none}
+.sl-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:489;
+  display:none;top:50px}
+.sl-overlay.open{display:block}
+/* Profile modal */
+.prof-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:600;
+  display:none;align-items:center;justify-content:center;padding:20px;
+  backdrop-filter:blur(5px)}
+.prof-overlay.open{display:flex}
+.prof-card{background:var(--surface);border:1px solid var(--border2);border-radius:20px;
+  width:100%;max-width:440px;overflow:hidden;max-height:90vh;overflow-y:auto}
+.prof-section{padding:0 22px 16px}
+.prof-field label{display:block;font-size:.68rem;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.05em;margin-bottom:4px;font-weight:600}
+.prof-field select,.prof-field input{width:100%;background:var(--surface2);border:1px solid var(--border);
+  color:var(--text);padding:9px 12px;border-radius:9px;font-family:inherit;font-size:.85rem;
+  margin-bottom:11px}
+.prof-field select:focus,.prof-field input:focus{outline:none;border-color:var(--accent)}
+.prof-ro{display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.8rem;
+  background:var(--surface2);border-radius:10px;padding:12px;margin-bottom:14px}
+.prof-ro-item .lbl{font-size:.65rem;color:var(--muted)}
+.prof-ro-item .val{font-weight:600;word-break:break-all}
+.prof-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+  background:rgba(108,71,255,.07);border:1px solid rgba(108,71,255,.15);
+  border-radius:10px;padding:12px;text-align:center;margin-bottom:14px}
+.prof-stat-num{font-family:"Syne",sans-serif;font-size:1.3rem;font-weight:800}
+.prof-stat-lbl{font-size:.65rem;color:var(--muted);margin-top:1px}
+@media(max-width:768px){
+  .topbar{left:0}
+  .main{margin-left:0;padding-top:50px}
+  .page-wrap{padding:20px 16px}
+  .topbar-tags{display:none}
+}
+
 </style>
 </head>
 <body>
-
-<!-- ══ USER TOPBAR ══ -->
-<div id="ps-topbar" style="position:fixed;top:0;left:248px;right:0;height:50px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px 0 24px;gap:10px;z-index:150">
-  <div style="flex-shrink:0">
-    <div style="font-size:.68rem;color:var(--muted)">Welcome back,</div>
-    <div style="font-family:Syne,sans-serif;font-size:.88rem;font-weight:700;line-height:1" id="tb-name">User</div>
-  </div>
-  <div id="tb-tags" style="display:flex;gap:6px;flex:1;overflow:hidden;align-items:center"></div>
-  <div style="display:flex;gap:7px;align-items:center;flex-shrink:0;margin-left:auto">
-    <button onclick="openShortlistDrawer()" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 11px;font-size:.74rem;cursor:pointer;font-family:inherit;white-space:nowrap" id="tb-saves-btn">❤️ Saved <span id="tb-saves">0</span></button>
-    <button onclick="openProfileModal()" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 11px;font-size:.74rem;cursor:pointer;font-family:inherit">👤 Profile</button>
-    <button onclick="psLogout()" style="background:rgba(255,107,107,.08);border:1px solid rgba(255,107,107,.2);color:var(--accent3);border-radius:8px;padding:5px 11px;font-size:.74rem;cursor:pointer;font-family:inherit">⏻ Sign Out</button>
-  </div>
-</div>
-
-<!-- ══ SHORTLIST SIDE DRAWER ══ -->
-<div id="sl-overlay" onclick="closeShortlistDrawer()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:498"></div>
-<div id="sl-drawer" style="display:none;position:fixed;top:0;right:0;bottom:0;width:360px;background:var(--surface);border-left:1px solid var(--border);z-index:499;flex-direction:column;overflow:hidden;box-shadow:-8px 0 40px rgba(0,0,0,.5)">
-  <div style="padding:18px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
-    <span style="font-family:Syne,sans-serif;font-weight:700">❤️ Shortlisted Properties</span>
-    <button onclick="closeShortlistDrawer()" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:.85rem">✕</button>
-  </div>
-  <div id="sl-list" style="flex:1;overflow-y:auto;padding:14px"></div>
-</div>
-
-<!-- ══ PROFILE MODAL ══ -->
-<div id="profile-modal" onclick="if(event.target===this)closeProfileModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:600;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)">
-  <div style="background:var(--surface);border:1px solid rgba(255,255,255,.12);border-radius:20px;width:100%;max-width:440px;overflow:hidden;max-height:90vh;overflow-y:auto">
-    <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--surface)">
-      <span style="font-family:Syne,sans-serif;font-size:1.05rem;font-weight:700">My Profile</span>
-      <button onclick="closeProfileModal()" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);width:30px;height:30px;border-radius:7px;cursor:pointer">✕</button>
-    </div>
-    <div style="padding:22px 24px">
-      <!-- READ-ONLY -->
-      <div style="background:var(--surface2);border-radius:12px;padding:14px;margin-bottom:18px">
-        <div style="font-size:.66rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin-bottom:9px">Account Details (cannot be changed)</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.8rem">
-          <div><div style="color:var(--muted);font-size:.65rem;margin-bottom:2px">Full Name</div><div style="font-weight:600" id="pm-name">—</div></div>
-          <div><div style="color:var(--muted);font-size:.65rem;margin-bottom:2px">Email</div><div style="font-weight:600;word-break:break-all" id="pm-email">—</div></div>
-          <div><div style="color:var(--muted);font-size:.65rem;margin-bottom:2px">Phone</div><div style="font-weight:600" id="pm-phone">—</div></div>
-          <div><div style="color:var(--muted);font-size:.65rem;margin-bottom:2px">Member Since</div><div style="font-weight:600" id="pm-since">—</div></div>
-        </div>
-      </div>
-      <!-- EDITABLE PREFS -->
-      <div style="font-size:.66rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin-bottom:10px">Preferences (editable)</div>
-      <div style="display:flex;flex-direction:column;gap:11px;margin-bottom:16px">
-        <div>
-          <label style="font-size:.68rem;color:var(--muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em">Preferred City</label>
-          <select id="pref-city" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:9px;font-family:inherit;font-size:.86rem;outline:none">
-            <option value="">— Not set —</option>
-            <option>Mumbai</option><option>Pune</option><option>Bangalore</option><option>Hyderabad</option>
-            <option>Chennai</option><option>Delhi</option><option>Kolkata</option><option>Ahmedabad</option>
-            <option>Jaipur</option><option>Surat</option><option>Other</option>
-          </select>
-        </div>
-        <div>
-          <label style="font-size:.68rem;color:var(--muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em">Property Budget</label>
-          <select id="pref-budget" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:9px;font-family:inherit;font-size:.86rem;outline:none">
-            <option value="">— Not set —</option>
-            <option value="0-2500000">Under ₹25 Lakhs</option>
-            <option value="2500000-5000000">₹25L – ₹50L</option>
-            <option value="5000000-10000000">₹50L – ₹1 Crore</option>
-            <option value="10000000-20000000">₹1Cr – ₹2Cr</option>
-            <option value="20000000-50000000">₹2Cr – ₹5Cr</option>
-            <option value="50000000+">₹5Cr+</option>
-          </select>
-        </div>
-        <div>
-          <label style="font-size:.68rem;color:var(--muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em">Looking For</label>
-          <select id="pref-intent" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:9px;font-family:inherit;font-size:.86rem;outline:none">
-            <option value="">— Not set —</option>
-            <option value="buy">Buy — Self Use</option>
-            <option value="invest">Buy — Investment</option>
-            <option value="rent">Rent</option>
-            <option value="just_browsing">Just Browsing</option>
-          </select>
-        </div>
-        <div>
-          <label style="font-size:.68rem;color:var(--muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em">Bedroom Preference</label>
-          <select id="pref-beds" style="width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:9px;font-family:inherit;font-size:.86rem;outline:none">
-            <option value="">— No preference —</option>
-            <option value="1">1 BHK / Studio</option>
-            <option value="2">2 BHK</option>
-            <option value="3">3 BHK</option>
-            <option value="4">4 BHK+</option>
-          </select>
-        </div>
-      </div>
-      <!-- ACTIVITY STATS -->
-      <div style="background:rgba(108,71,255,.07);border:1px solid rgba(108,71,255,.15);border-radius:10px;padding:12px;margin-bottom:16px">
-        <div style="font-size:.66rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin-bottom:8px">My Activity</div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center">
-          <div><div style="font-family:Syne,sans-serif;font-size:1.3rem;font-weight:700;color:var(--accent2)" id="pm-views">0</div><div style="font-size:.68rem;color:var(--muted)">Props Viewed</div></div>
-          <div><div style="font-family:Syne,sans-serif;font-size:1.3rem;font-weight:700;color:var(--gold)" id="pm-saves">0</div><div style="font-size:.68rem;color:var(--muted)">Shortlisted</div></div>
-          <div><div style="font-family:Syne,sans-serif;font-size:1.3rem;font-weight:700;color:var(--accent)" id="pm-searches">0</div><div style="font-size:.68rem;color:var(--muted)">Searches</div></div>
-        </div>
-      </div>
-      <div style="display:flex;gap:10px">
-        <button onclick="saveProfile()" style="flex:1;background:linear-gradient(135deg,var(--accent),#8b64ff);color:#fff;border:none;border-radius:10px;padding:11px;font-family:Syne,sans-serif;font-size:.88rem;font-weight:700;cursor:pointer">💾 Save Preferences</button>
-        <button onclick="closeProfileModal()" style="padding:11px 14px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;font-family:Syne,sans-serif;font-size:.88rem;cursor:pointer">Cancel</button>
-      </div>
-    </div>
-  </div>
-</div>
 
 <!-- ══════════════════════ SIDEBAR ══════════════════════ -->
 <aside class="sidebar">
@@ -435,6 +389,99 @@ body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
 </aside>
 
 <!-- ══════════════════════ MAIN ══════════════════════ -->
+
+<!-- ══════════════ USER TOPBAR ══════════════ -->
+<div class="topbar" id="topbar">
+  <div class="topbar-left">
+    <div class="greet">Welcome back,</div>
+    <div class="uname" id="tb-name">User</div>
+  </div>
+  <div class="topbar-tags" id="tb-tags"></div>
+  <div class="topbar-right">
+    <button class="tb-btn" onclick="openShortlistDrawer()">❤️ Saved <span id="tb-saves">0</span></button>
+    <button class="tb-btn" onclick="openProfileModal()">👤 Profile</button>
+    <button class="tb-btn tb-btn-danger" onclick="psLogout()">⏻ Sign Out</button>
+  </div>
+</div>
+
+<!-- ══════════════ SHORTLIST DRAWER ══════════════ -->
+<div class="sl-overlay" id="sl-overlay" onclick="closeShortlistDrawer()"></div>
+<div class="sl-drawer" id="sl-drawer">
+  <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
+    <div style="font-family:Syne,sans-serif;font-size:1rem;font-weight:700">❤️ Shortlisted Properties</div>
+    <button onclick="closeShortlistDrawer()" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:.85rem">✕</button>
+  </div>
+  <div id="sl-list" style="flex:1;overflow-y:auto;padding:14px"></div>
+</div>
+
+<!-- ══════════════ PROFILE MODAL ══════════════ -->
+<div class="prof-overlay" id="prof-overlay" onclick="if(event.target===this)closeProfileModal()">
+  <div class="prof-card">
+    <div style="padding:20px 22px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <div style="font-family:Syne,sans-serif;font-size:1.1rem;font-weight:700">My Profile</div>
+      <button onclick="closeProfileModal()" style="background:var(--surface2);border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:.85rem">✕</button>
+    </div>
+    <div class="prof-section" style="padding-top:16px">
+      <!-- Read-only account info -->
+      <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;font-weight:600">Account Info (read-only)</div>
+      <div class="prof-ro">
+        <div class="prof-ro-item"><div class="lbl">Name</div><div class="val" id="pm-name">—</div></div>
+        <div class="prof-ro-item"><div class="lbl">Email</div><div class="val" id="pm-email">—</div></div>
+        <div class="prof-ro-item"><div class="lbl">Phone</div><div class="val" id="pm-phone">—</div></div>
+        <div class="prof-ro-item"><div class="lbl">Member Since</div><div class="val" id="pm-since">—</div></div>
+      </div>
+      <!-- Activity stats -->
+      <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;font-weight:600">My Activity</div>
+      <div class="prof-stats">
+        <div><div class="prof-stat-num" style="color:var(--accent2)" id="pm-views">0</div><div class="prof-stat-lbl">Properties Viewed</div></div>
+        <div><div class="prof-stat-num" style="color:var(--gold)" id="pm-saves">0</div><div class="prof-stat-lbl">Shortlisted</div></div>
+        <div><div class="prof-stat-num" style="color:var(--accent)" id="pm-searches">0</div><div class="prof-stat-lbl">Searches</div></div>
+      </div>
+      <!-- Editable preferences -->
+      <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;font-weight:600">Preferences (editable)</div>
+      <div class="prof-field">
+        <label>Preferred City</label>
+        <select id="pref-city">
+          <option value="">— Not set —</option>
+          <option>Mumbai</option><option>Pune</option><option>Bangalore</option><option>Hyderabad</option>
+          <option>Chennai</option><option>Delhi</option><option>Kolkata</option><option>Ahmedabad</option>
+          <option>Jaipur</option><option>Surat</option><option>Other</option>
+        </select>
+        <label>Property Budget</label>
+        <select id="pref-budget">
+          <option value="">— Not set —</option>
+          <option value="0-2500000">Under ₹25 Lakhs</option>
+          <option value="2500000-5000000">₹25L – ₹50L</option>
+          <option value="5000000-10000000">₹50L – ₹1 Crore</option>
+          <option value="10000000-20000000">₹1Cr – ₹2Cr</option>
+          <option value="20000000-50000000">₹2Cr – ₹5Cr</option>
+          <option value="50000000+">₹5Cr+</option>
+        </select>
+        <label>Looking For</label>
+        <select id="pref-intent">
+          <option value="">— Not set —</option>
+          <option value="buy">Buy — Self Use</option>
+          <option value="invest">Buy — Investment</option>
+          <option value="rent">Rent</option>
+          <option value="just_browsing">Just Browsing</option>
+        </select>
+        <label>Bedroom Preference</label>
+        <select id="pref-beds">
+          <option value="">— No preference —</option>
+          <option value="1">1 BHK / Studio</option>
+          <option value="2">2 BHK</option>
+          <option value="3">3 BHK</option>
+          <option value="4">4 BHK+</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:4px;padding-bottom:4px">
+        <button onclick="saveProfile()" style="flex:1;background:linear-gradient(135deg,var(--accent),#8b64ff);color:#fff;border:none;border-radius:10px;padding:11px;font-family:Syne,sans-serif;font-size:.88rem;font-weight:700;cursor:pointer">💾 Save Preferences</button>
+        <button onclick="closeProfileModal()" style="padding:11px 16px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:10px;font-family:Syne,sans-serif;cursor:pointer;font-size:.85rem">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <main class="main">
 <div class="page-wrap">
 
@@ -829,11 +876,11 @@ async function loadData() {
   renderDataTable();
   renderBanks(BANKS);
   initDashboard();
-  psInitBar();
   initMarket();
   initAnomaly();
   calcEMI();
   updateEMIBanks();
+  psInitBar();
 }
 
 /* ════════════════════════════════════════════════════════
@@ -916,8 +963,8 @@ function filterListings() {
    PROPERTY DETAIL MODAL
 ════════════════════════════════════════════════════════ */
 function openPropertyModal(p) {
-  // Track property view (only fires when user explicitly opens a property)
-  psTrack("property_view", { id:p.id, title:p.title, city:p.city, price:p.price, type:p.property_type });
+  // Track property view (deduplicated — only new views counted)
+  psTrack("property_view", {prop_id:p.id, title:p.title, city:p.city, price:p.price, type:p.property_type});
   document.getElementById("modal-title").textContent = p.title;
   document.getElementById("modal-subtitle").textContent = `${p.locality}, ${p.city} · ${p.builder||""}`;
 
@@ -997,9 +1044,9 @@ function openPropertyModal(p) {
     </div>
 
     <div style="display:flex;gap:10px;margin-top:20px;padding-top:18px;border-top:1px solid var(--border)">
-      <button class="btn btn-primary" onclick="closeModal();prefillInvestment(${p.price},'${p.city}');showSection('investment',document.querySelectorAll('.nav-item')[7])">📈 Investment Analysis</button>
-      <button class="btn btn-ghost" onclick="closeModal();prefillEMI(${p.price});showSection('emi',document.querySelectorAll('.nav-item')[8])">🧮 EMI Calculator</button>
-      <button onclick="psShortlist('${p.id}','${p.title.replace(/'/g,\"\")}')" style="background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.3);color:var(--accent3);border-radius:10px;padding:10px 18px;cursor:pointer;font-family:Syne,sans-serif;font-size:.85rem;font-weight:600">❤️ Shortlist</button>
+      <button class="btn btn-primary" onclick="closeModal();prefillInvestment(${p.price},'${p.city}');showSection('investment',document.querySelectorAll('.nav-item')[7])">📈 Full Investment Analysis</button>
+      <button class="btn btn-ghost" onclick="closeModal();prefillEMI(${p.price});showSection('emi',document.querySelectorAll('.nav-item')[8])">🧮 Calculate EMI</button>
+      <button class="btn btn-sm" style="background:rgba(255,107,107,.1);color:var(--accent3);border:1px solid rgba(255,107,107,.3)" onclick="psShortlist('${p.id}','${(p.title||'').replace(/'/g,'').slice(0,40)}')">❤️ Shortlist</button>
     </div>`;
 
   document.getElementById("prop-modal").classList.add("open");
@@ -1032,11 +1079,11 @@ function closeModal() {
    RECOMMENDATIONS
 ════════════════════════════════════════════════════════ */
 function runRecommendation() {
-  psTrack("search", {
-    city:  document.getElementById("r-city")?.value||"",
-    type:  document.getElementById("r-type")?.value||"",
-    beds:  document.getElementById("r-bed")?.value||"",
-    budget:document.getElementById("r-budget")?.value||0
+  psTrack("search",{
+    city:   (document.getElementById("r-city")?.value||"").replace("All Cities",""),
+    type:   document.getElementById("r-type")?.value||"",
+    beds:   document.getElementById("r-bed")?.value||"",
+    budget: document.getElementById("r-budget")?.value||0
   });
   const city     = document.getElementById("r-city").value;
   const type     = document.getElementById("r-type").value;
@@ -1289,6 +1336,7 @@ function runPrediction() {
   const city=document.getElementById("p-city").value;
   const type=document.getElementById("p-type").value;
   const area=+document.getElementById("p-area").value;
+  psTrack("prediction",{city,type,area,beds:document.getElementById("p-bed")?.value||""});
   const age=+document.getElementById("p-age").value;
   const loc=+document.getElementById("p-loc").value;
   const amen=+document.getElementById("p-amen").value;
@@ -1722,170 +1770,186 @@ document.addEventListener("keydown", e => { if(e.key==="Escape"){ closeModal(); 
    INIT
 ════════════════════════════════════════════════════════ */
 
-/* ═══════════════════════════════════════════════════════════
-   AUTH  ·  TRACKING  ·  PROFILE  ·  SHORTLIST
-   Single block - no duplicates
-═══════════════════════════════════════════════════════════ */
-const PS_SESSION = window.__PS_SESSION || {};
-const PS_UID     = PS_SESSION.id || null;
+/* ════════════════════════════════════════════════════
+   SESSION · TRACKING · TOPBAR · PROFILE · SHORTLIST
+════════════════════════════════════════════════════ */
+const __SESS = window.__PS_SESSION || {};
+const __UID  = __SESS.id || null;
 
-/* ── user record helpers (single source of truth) ── */
+/* Single source of truth */
 function psGetUser() {
-  if (!PS_UID) return null;
-  return (JSON.parse(localStorage.getItem("ps_users")||"[]")).find(u=>u.id===PS_UID) || null;
+  if (!__UID) return null;
+  return (JSON.parse(localStorage.getItem("ps_users")||"[]")).find(u=>u.id===__UID) || null;
 }
 function psPatchUser(updates) {
-  if (!PS_UID) return;
+  if (!__UID) return;
   const users = JSON.parse(localStorage.getItem("ps_users")||"[]");
-  const i = users.findIndex(u=>u.id===PS_UID);
-  if (i<0) return;
-  Object.assign(users[i], updates);
+  const idx = users.findIndex(u=>u.id===__UID);
+  if (idx < 0) return;
+  Object.assign(users[idx], updates);
   localStorage.setItem("ps_users", JSON.stringify(users));
-  // sync non-locked fields back to session
+  // Sync editable fields to session
   const sess = JSON.parse(localStorage.getItem("ps_session")||"{}");
-  ["city","budget","intent","pref_beds"].forEach(k=>{ if(updates[k]!==undefined) sess[k]=updates[k]; });
+  ["city","budget","intent","pref_beds"].forEach(k=>{ if (updates[k]!==undefined) sess[k]=updates[k]; });
   localStorage.setItem("ps_session", JSON.stringify(sess));
 }
 
-/* ── event tracker (property activity ONLY — no auth events) ── */
-function psTrack(type, data) {
+/* Track ONLY property activity — no auth events */
+function psTrack(type, data={}) {
+  const SKIP = ["user_login","user_logout","admin_login","manager_login"];
+  if (SKIP.includes(type)) return;
   try {
     const ev = JSON.parse(localStorage.getItem("ps_events")||"[]");
-    ev.push({ type, data:{ user_id:PS_UID, user_name:PS_SESSION.fname||PS_SESSION.name, ...data }, ts:new Date().toISOString() });
-    if(ev.length>2000) ev.splice(0,ev.length-2000);
+    ev.push({type, data:{user_id:__UID, uname:__SESS.name||__SESS.fname, ...data}, timestamp:new Date().toISOString()});
+    if (ev.length>2000) ev.splice(0, ev.length-2000);
     localStorage.setItem("ps_events", JSON.stringify(ev));
     _psMirror(type, data);
-  } catch(e){}
+  } catch(e) {}
 }
 function _psMirror(type, data) {
-  if(!PS_UID) return;
+  if (!__UID) return;
   const users = JSON.parse(localStorage.getItem("ps_users")||"[]");
-  const i = users.findIndex(u=>u.id===PS_UID);
-  if(i<0) return;
-  const u = users[i];
-  if(type==="property_view" && data.id) {
+  const idx = users.findIndex(u=>u.id===__UID);
+  if (idx<0) return;
+  const u = users[idx];
+  if (type==="property_view" && data.prop_id) {
     u.viewed_properties = u.viewed_properties||[];
-    if(!u.viewed_properties.includes(data.id)) u.viewed_properties.push(data.id);
+    if (!u.viewed_properties.includes(data.prop_id)) u.viewed_properties.push(data.prop_id);
     u.activity = u.activity||[];
-    u.activity.unshift({ type, prop_id:data.id, title:data.title, city:data.city, price:data.price, ts:new Date().toISOString() });
-    u.activity = u.activity.slice(0,60);
+    u.activity.unshift({type,data,timestamp:new Date().toISOString()});
+    u.activity = u.activity.slice(0,50);
   }
-  if(type==="search") {
-    u.searches = u.searches||[];
-    u.searches.unshift({ ...data, ts:new Date().toISOString() });
-    u.searches = u.searches.slice(0,30);
-  }
-  if(type==="shortlist" && data.id) {
-    u.shortlisted = u.shortlisted||[];
-    if(!u.shortlisted.includes(data.id)) u.shortlisted.push(data.id);
-  }
-  if(type==="unshortlist" && data.id) {
-    u.shortlisted = (u.shortlisted||[]).filter(x=>x!==data.id);
-  }
-  users[i]=u;
+  if (type==="search")      { u.searches=(u.searches||[]); u.searches.unshift({...data,timestamp:new Date().toISOString()}); u.searches=u.searches.slice(0,30); }
+  if (type==="shortlist")   { u.shortlisted=u.shortlisted||[]; if(!u.shortlisted.includes(data.prop_id)) u.shortlisted.push(data.prop_id); }
+  if (type==="unshortlist") { u.shortlisted=(u.shortlisted||[]).filter(id=>id!==data.prop_id); }
+  if (type==="prediction")  { u.predictions=(u.predictions||[]); u.predictions.unshift({...data,timestamp:new Date().toISOString()}); u.predictions=u.predictions.slice(0,20); }
+  users[idx]=u;
   localStorage.setItem("ps_users", JSON.stringify(users));
 }
 
-/* ── topbar init ── */
+/* Topbar init */
 function psInitBar() {
-  const u = psGetUser() || PS_SESSION;
-  _psEl("tb-name", u.fname || (u.name||"User").split(" ")[0]);
-  // tags
+  const u = psGetUser()||__SESS;
+  const fname = u.fname||(u.name||"User").split(" ")[0];
+  const el = id=>document.getElementById(id);
+  if(el("tb-name")) el("tb-name").textContent = fname;
+  // Tags
   const tags = [];
-  if(u.city)   tags.push(`📍 ${u.city}`);
-  if(u.budget) tags.push(`💰 ${_psBudgetLabel(u.budget)}`);
-  if(u.intent) tags.push(`🎯 ${_psIntentLabel(u.intent)}`);
-  const tagsEl = document.getElementById("tb-tags");
-  if(tagsEl) tagsEl.innerHTML = tags.map(t=>`<span style="background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:3px 9px;font-size:.7rem;color:var(--muted);white-space:nowrap">${t}</span>`).join("");
-  // save count
-  _psEl("tb-saves", (psGetUser()?.shortlisted||[]).length);
+  if(u.city)   tags.push("📍 "+u.city);
+  if(u.budget) tags.push("💰 "+psFmtBudget(u.budget));
+  if(u.intent) tags.push(psFmtIntent(u.intent));
+  const tagsEl = el("tb-tags");
+  if(tagsEl) tagsEl.innerHTML = tags.map(t=>`<span class="tb-tag">${t}</span>`).join("");
+  // Save count
+  const cnt = (psGetUser()?.shortlisted||[]).length;
+  if(el("tb-saves")) el("tb-saves").textContent = cnt;
 }
-
-function _psEl(id,v){ const e=document.getElementById(id); if(e) e.textContent=v; }
-function _psBudgetLabel(b){ return {"0-2500000":"<₹25L","2500000-5000000":"₹25-50L","5000000-10000000":"₹50L-1Cr","10000000-20000000":"₹1-2Cr","20000000-50000000":"₹2-5Cr","50000000+":"₹5Cr+"}[b]||b; }
-function _psIntentLabel(i){ return {buy:"Buying",invest:"Investing",rent:"Renting",just_browsing:"Browsing"}[i]||i; }
-
-/* ── logout ── */
+function psFmtBudget(b) {
+  return {"0-2500000":"<₹25L","2500000-5000000":"₹25-50L","5000000-10000000":"₹50L-1Cr",
+    "10000000-20000000":"₹1-2Cr","20000000-50000000":"₹2-5Cr","50000000+":"₹5Cr+"}[b]||"";
+}
+function psFmtIntent(i) {
+  return {buy:"Buying",invest:"Investing",rent:"Renting",just_browsing:"Browsing"}[i]||i||"";
+}
 function psLogout() {
   localStorage.removeItem("ps_session");
   window.location.href = "login.html";
 }
 
-/* ── shortlist drawer ── */
+/* Shortlist drawer */
 function openShortlistDrawer() {
-  const saved = psGetUser()?.shortlisted || [];
+  const u = psGetUser();
+  const saved = u?.shortlisted||[];
   const list  = document.getElementById("sl-list");
-  if(!list) return;
-  if(!saved.length) {
-    list.innerHTML = `<div style="text-align:center;padding:40px 16px;color:var(--muted)"><div style="font-size:2rem;margin-bottom:8px">💔</div><div style="font-size:.85rem">No properties shortlisted yet.</div><div style="font-size:.76rem;margin-top:5px;color:var(--muted)">Click ❤️ on any property.</div></div>`;
+  if (!list) return;
+  if (!saved.length) {
+    list.innerHTML = `<div style="text-align:center;padding:32px 16px;color:var(--muted)">
+      <div style="font-size:2rem;margin-bottom:8px">💔</div>
+      <div style="font-weight:600;margin-bottom:4px">Nothing saved yet</div>
+      <div style="font-size:.78rem">Click ❤️ on any property to shortlist it</div>
+    </div>`;
   } else {
     list.innerHTML = saved.map(id=>{
-      const p=(PROPERTIES||[]).find(x=>x.id===id);
+      const p = (PROPERTIES||[]).find(x=>x.id===id);
       if(!p) return "";
-      const pj = JSON.stringify(p).replace(/"/g,"&quot;");
-      return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:9px">
-        <div style="font-family:Syne,sans-serif;font-size:.85rem;font-weight:700;margin-bottom:3px;cursor:pointer" onclick="closeShortlistDrawer();openPropertyModal(${pj})">${p.title}</div>
-        <div style="font-size:.73rem;color:var(--muted);margin-bottom:6px">${p.city} · ${p.property_type} · ${p.bedrooms}BHK</div>
+      const safeP = JSON.stringify(p).replace(/"/g,"&quot;");
+      return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px">
+        <div style="font-family:Syne,sans-serif;font-size:.85rem;font-weight:700;margin-bottom:2px;cursor:pointer" onclick="closeShortlistDrawer();openPropertyModal(JSON.parse(this.closest('[data-p]').dataset.p))">${p.title}</div>
+        <div style="font-size:.73rem;color:var(--muted);margin-bottom:8px">${p.city} · ${p.property_type} · ${p.bedrooms}BHK</div>
         <div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="font-family:Syne,sans-serif;font-size:.9rem;font-weight:700;color:var(--accent2)">${formatINR(p.price)}</span>
-          <button onclick="psRemoveShortlist('${p.id}','${p.title.replace(/'/g,"")}')" style="background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.25);color:var(--accent3);border-radius:7px;padding:3px 9px;font-size:.7rem;cursor:pointer;font-family:inherit">✕ Remove</button>
+          <div style="font-family:Syne,sans-serif;color:var(--accent2);font-size:.92rem;font-weight:700">${formatINR(p.price)}</div>
+          <button onclick="psUnshortlist('${p.id}','${(p.title||"").replace(/'/g,"")}');this.closest('[data-p]').remove();updateSaveCount()" style="background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.25);color:var(--accent3);border-radius:7px;padding:3px 9px;font-size:.7rem;cursor:pointer">Remove</button>
         </div>
-      </div>`;
+      </div>`.replace('<div style="background', `<div data-p="${safeP}" style="background`);
     }).filter(Boolean).join("");
   }
-  document.getElementById("sl-drawer").style.display="flex";
-  document.getElementById("sl-overlay").style.display="block";
+  document.getElementById("sl-drawer").classList.add("open");
+  document.getElementById("sl-overlay").classList.add("open");
 }
 function closeShortlistDrawer() {
-  document.getElementById("sl-drawer").style.display="none";
-  document.getElementById("sl-overlay").style.display="none";
-}
-function psRemoveShortlist(id, title) {
-  psTrack("unshortlist",{id,title});
-  _psEl("tb-saves",(psGetUser()?.shortlisted||[]).length);
-  openShortlistDrawer(); // refresh
-  showToast("Removed from shortlist","success");
+  document.getElementById("sl-drawer").classList.remove("open");
+  document.getElementById("sl-overlay").classList.remove("open");
 }
 function psShortlist(id, title) {
-  const already=(psGetUser()?.shortlisted||[]).includes(id);
-  if(already){showToast("Already in your shortlist","success");return;}
-  psTrack("shortlist",{id,title});
-  _psEl("tb-saves",(psGetUser()?.shortlisted||[]).length);
+  const u = psGetUser();
+  if ((u?.shortlisted||[]).includes(id)) { showToast("Already shortlisted!","success"); return; }
+  psTrack("shortlist",{prop_id:id,title});
+  updateSaveCount();
   showToast("❤️ Added to shortlist!","success");
 }
+function psUnshortlist(id, title) {
+  psTrack("unshortlist",{prop_id:id,title});
+  updateSaveCount();
+}
+function updateSaveCount() {
+  const cnt = (psGetUser()?.shortlisted||[]).length;
+  const el = document.getElementById("tb-saves");
+  if(el) el.textContent = cnt;
+}
 
-/* ── profile modal ── */
+/* Profile modal */
 function openProfileModal() {
-  const u = psGetUser() || PS_SESSION;
-  _psEl("pm-name",  u.fname ? `${u.fname} ${u.lname||""}`.trim() : u.name||"—");
-  _psEl("pm-email", u.email||"—");
-  _psEl("pm-phone", u.phone||"Not provided");
-  _psEl("pm-since", u.created_at ? new Date(u.created_at).toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"}) : "—");
-  _psEl("pm-views",   (u.viewed_properties||[]).length);
-  _psEl("pm-saves",   (u.shortlisted||[]).length);
-  _psEl("pm-searches",(u.searches||[]).length);
-  // pre-fill dropdowns
-  const sel = (id,v)=>{ const e=document.getElementById(id); if(e) e.value=v||""; };
-  sel("pref-city",   u.city   ||"");
-  sel("pref-budget", u.budget ||"");
-  sel("pref-intent", u.intent ||"");
-  sel("pref-beds",   u.pref_beds||"");
-  const m = document.getElementById("profile-modal");
-  if(m){ m.style.display="flex"; document.body.style.overflow="hidden"; }
+  const u = psGetUser()||__SESS;
+  const el = id=>document.getElementById(id);
+  // Read-only
+  if(el("pm-name"))  el("pm-name").textContent  = u.name||`${u.fname||""} ${u.lname||""}`.trim()||"—";
+  if(el("pm-email")) el("pm-email").textContent = u.email||"—";
+  if(el("pm-phone")) el("pm-phone").textContent = u.phone||"Not provided";
+  if(el("pm-since")) el("pm-since").textContent = u.created_at ? new Date(u.created_at).toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"}) : "—";
+  // Stats
+  if(el("pm-views"))   el("pm-views").textContent   = (u.viewed_properties||[]).length;
+  if(el("pm-saves"))   el("pm-saves").textContent   = (u.shortlisted||[]).length;
+  if(el("pm-searches"))el("pm-searches").textContent = (u.searches||[]).length;
+  // Editable — pre-fill current values (single source, no duplication)
+  if(el("pref-city"))   el("pref-city").value   = u.city||"";
+  if(el("pref-budget")) el("pref-budget").value  = u.budget||"";
+  if(el("pref-intent")) el("pref-intent").value  = u.intent||"";
+  if(el("pref-beds"))   el("pref-beds").value    = u.pref_beds||"";
+  const ov = document.getElementById("prof-overlay");
+  if(ov){ ov.classList.add("open"); document.body.style.overflow="hidden"; }
 }
 function closeProfileModal() {
-  const m=document.getElementById("profile-modal");
-  if(m){ m.style.display="none"; document.body.style.overflow=""; }
+  const ov = document.getElementById("prof-overlay");
+  if(ov){ ov.classList.remove("open"); document.body.style.overflow=""; }
 }
 function saveProfile() {
-  const get = id=>{ const e=document.getElementById(id); return e?e.value:""; };
-  const upd = { city:get("pref-city"), budget:get("pref-budget"), intent:get("pref-intent"), pref_beds:get("pref-beds") };
+  const g = id=>document.getElementById(id)?.value||"";
+  const upd = { city:g("pref-city"), budget:g("pref-budget"), intent:g("pref-intent"), pref_beds:g("pref-beds") };
   psPatchUser(upd);
-  psInitBar(); // refresh topbar tags
+  // Update topbar tags live
+  const tagsEl = document.getElementById("tb-tags");
+  if(tagsEl) {
+    const tags = [];
+    if(upd.city)   tags.push("📍 "+upd.city);
+    if(upd.budget) tags.push("💰 "+psFmtBudget(upd.budget));
+    if(upd.intent) tags.push(psFmtIntent(upd.intent));
+    tagsEl.innerHTML = tags.map(t=>`<span class="tb-tag">${t}</span>`).join("");
+  }
   closeProfileModal();
-  showToast("Preferences saved ✓","success");
+  showToast("✓ Preferences saved","success");
 }
 document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ closeProfileModal(); closeShortlistDrawer(); } });
+/* ════════════════════════════════════════════════════ */
 
 
 loadData();
